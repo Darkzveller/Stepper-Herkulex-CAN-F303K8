@@ -1,6 +1,5 @@
 #include <mbed.h>
 #include "STEPPER.h"
-
 // CAN can(PA_11, PA_12, 1000000);  // CAN Rx pin name, CAN Tx pin name
 DigitalOut led(LED1);
 
@@ -12,8 +11,8 @@ int main()
 
     while (true)
     {
-        // stepper(610,0,0,0,1,0,0);
         stepper(convert_angle_to_pas(90), PAS_COMPLET, 0);
+
         ThisThread::sleep_for(250ms);
         led = 0;
         ThisThread::sleep_for(250ms);
