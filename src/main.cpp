@@ -1,14 +1,32 @@
 #include <Arduino.h>
 #include <HERKULEX.h>
+#include "STEPPER.h"
+
 bool activate_detect = false;
 
 void setup()
 {
+
     Serial.begin(115200);
+    Serial.println("Serial.begin");
+    delay(100);
+    initStepper();
+    Serial.println("initStepper()");
     init_serial_1_for_herkulex();
+    delay(100);
+    Serial.println("init_serial_1_for_herkulex");
 }
 void loop()
 {
+    // Serial.println("Fonctionnement");
+
+    stepper(convert_angle_to_pas(90), PAS_COMPLET, 0);
+    delay(250);
+    stepper(convert_angle_to_pas(-90), PAS_COMPLET, 0);
+    delay(250);
+
+    test_herkulex();
+    
     if (Serial.available() > 0)
     {
         char c = Serial.read();
@@ -27,7 +45,6 @@ void loop()
         activate_detect = false;
     }
 }
-
 
 // #include <mbed.h>
 // #include "STEPPER.h"

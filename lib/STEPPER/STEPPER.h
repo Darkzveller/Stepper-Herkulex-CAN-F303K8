@@ -16,8 +16,6 @@
 #define CENTVINGTHUITIEME_DE_PAS 0b111  // M2=1, M1=1, M0=1
 
 
-
-
 //* Fonction pour initialiser le moteur pas-à-pas
 void initStepper();
 void blockStepper(void);
