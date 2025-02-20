@@ -1,8 +1,9 @@
 #include <Arduino.h>
 #include <HERKULEX.h>
-#include "STEPPER.h"
-
+#include <STEPPER.h>
+#include <CAN.h>
 bool activate_detect = false;
+// CAN can(PA_11, PA_12, 1000000); // CAN Rx pin name, CAN Tx pin name
 
 void setup()
 {
@@ -12,9 +13,15 @@ void setup()
     delay(100);
     initStepper();
     Serial.println("initStepper()");
+
     init_serial_1_for_herkulex();
     delay(100);
     Serial.println("init_serial_1_for_herkulex");
+
+    setup_can();
+    delay(100);
+    Serial.println("setup_can");
+    delay(100);
 }
 void loop()
 {
@@ -26,7 +33,10 @@ void loop()
     delay(250);
 
     test_herkulex();
-    
+
+    sendCANMessage(0xFF,0x11,0x22,0,0,0,0,0,0);
+    delay(250);
+
     if (Serial.available() > 0)
     {
         char c = Serial.read();
