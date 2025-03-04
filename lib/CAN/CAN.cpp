@@ -25,16 +25,16 @@ void setup_can(){
 void sendCANMessage(int id, int data0, int data1, int data2, int data3, int data4, int data5, int data6,int data7)
 {
     // Exemple : Envoi d'un message CAN
-    CAN_RX_msg.id = id; // ID CAN
-    CAN_RX_msg.len = 8; // DLC : Nombre d'octets dans le message
-    CAN_RX_msg.buf[0] = data0;      // Données a envoyés
-    CAN_RX_msg.buf[1] = data1;
-    CAN_RX_msg.buf[2] = data2;
-    CAN_RX_msg.buf[3] = data3;
-    CAN_RX_msg.buf[4] = data4;
-    CAN_RX_msg.buf[5] = data5;
-    CAN_RX_msg.buf[6] = data6;
-    CAN_RX_msg.buf[7] = data7;
+    CAN_TX_msg.id = id; // ID CAN
+    CAN_TX_msg.len = 8; // DLC : Nombre d'octets dans le message
+    CAN_TX_msg.buf[0] = data0;      // Données a envoyés
+    CAN_TX_msg.buf[1] = data1;
+    CAN_TX_msg.buf[2] = data2;
+    CAN_TX_msg.buf[3] = data3;
+    CAN_TX_msg.buf[4] = data4;
+    CAN_TX_msg.buf[5] = data5;
+    CAN_TX_msg.buf[6] = data6;
+    CAN_TX_msg.buf[7] = data7;
 
     Can.write(CAN_TX_msg);
 

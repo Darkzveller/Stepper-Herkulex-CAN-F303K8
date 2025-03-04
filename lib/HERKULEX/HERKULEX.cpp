@@ -55,7 +55,7 @@ void test_herkulex()
       // Déplace le servo à +45° en 50 cycles, allume la LED bleue
       // 512 + (45° / 0.325) = 650
       // 512 + 90°/0.325 = 789
-      my_servo.setPosition(512 + 45 / 0.325, 50, HerkulexLed::Blue);
+      my_servo.setPosition(512 + 90 / 0.325, 50, HerkulexLed::Blue);
       my_servo.setTorqueOn();
       // my_servo_2.setPosition(512+10/0.325, 50, HerkulexLed::Blue);
       // my_servo_3.setPosition(512-30/0.325, 50, HerkulexLed::Yellow);

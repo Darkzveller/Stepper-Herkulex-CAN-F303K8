@@ -27,15 +27,15 @@ void loop()
 {
     // Serial.println("Fonctionnement");
 
-    stepper(convert_angle_to_pas(90), PAS_COMPLET, 0);
-    delay(250);
-    stepper(convert_angle_to_pas(-90), PAS_COMPLET, 0);
-    delay(250);
+    // stepper(convert_angle_to_pas(90), PAS_COMPLET, 0);
+    // delay(250);
+    // stepper(convert_angle_to_pas(-90), PAS_COMPLET, 0);
+    // delay(250);
 
     test_herkulex();
 
-    sendCANMessage(0xFF,0x11,0x22,0,0,0,0,0,0);
-    delay(250);
+    // sendCANMessage(0xFF,0x11,0x22,0,0,0,0,0,0);
+    // delay(250);
 
     if (Serial.available() > 0)
     {
