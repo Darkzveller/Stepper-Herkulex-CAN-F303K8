@@ -2,12 +2,12 @@
 #include <HERKULEX.h>
 #include <STEPPER.h>
 #include <CAN.h>
+
 bool activate_detect = false;
 // CAN can(PA_11, PA_12, 1000000); // CAN Rx pin name, CAN Tx pin name
 
 void setup()
 {
-
     Serial.begin(115200);
     Serial.println("Serial.begin");
     delay(100);
@@ -25,6 +25,7 @@ void setup()
 }
 void loop()
 {
+    
     // Serial.println("Fonctionnement");
 
     // stepper(convert_angle_to_pas(90), PAS_COMPLET, 0);
@@ -36,7 +37,8 @@ void loop()
 
     // sendCANMessage(0xFF,0x11,0x22,0,0,0,0,0,0);
     // delay(250);
-
+    
+   
     if (Serial.available() > 0)
     {
         char c = Serial.read();

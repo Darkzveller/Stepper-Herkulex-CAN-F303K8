@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "STEPPER.h"
+#include <STEPPER.h>
 
 // Définition des broches
 #define PIN_STBY D7

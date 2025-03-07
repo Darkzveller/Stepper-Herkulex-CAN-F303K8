@@ -1,16 +1,22 @@
 #include <Arduino.h>
-#include "HardwareSerial.h"
+#include <HardwareSerial.h>
 #include <HerkulexServo.h>
+#include "HERKULEX.h"
 // Définition des broches utilisées pour la communication série avec les servos Herkulex
 #define PIN_SW_RX PB7 // Broche utilisée pour la réception (RX)
 #define PIN_SW_TX PB6 // Broche utilisée pour la transmission (TX)
 
-// Initialisation de la liaison série matérielle sur l'UART1
-HardwareSerial Serial1(USART1); // UART1 pour la communication avec les servos Herkulex
-// Création du bus de communication pour les servos Herkulex
+HardwareSerial Serial1(USART1);
 HerkulexServoBus herkulex_bus(Serial1);
-// Création d'un objet servo avec l'adresse de diffusion (HERKULEX_BROADCAST_ID signifie tous les servos connectés)
+// Initialisation de la liaison série matérielle sur l'UART1
 HerkulexServo my_servo(herkulex_bus, HERKULEX_BROADCAST_ID);
+HerkulexServo Aimant_centre(herkulex_bus, SERVO_AIMANT_CENTRE);
+HerkulexServo Aimant_gauche(herkulex_bus, SERVO_AIMANT_GAUCHE);
+HerkulexServo Aimant_droit(herkulex_bus, SERVO_AIMANT_DROIT);
+HerkulexServo Pivot_gauche(herkulex_bus, SERVO_PIVOT_GAUCHE);
+HerkulexServo Pivot_droit(herkulex_bus, SERVO_PIVOT_DROIT);
+// Création d'un objet servo avec l'adresse de diffusion (HERKULEX_BROADCAST_ID signifie tous les servos connectés)
+
 // Variables pour gérer l'intervalle de mise à jour
 unsigned long last_update = 0; // Stocke le temps de la dernière mise à jour
 unsigned long now = 0;         // Stocke le temps actuel
@@ -55,7 +61,7 @@ void test_herkulex()
       // Déplace le servo à +45° en 50 cycles, allume la LED bleue
       // 512 + (45° / 0.325) = 650
       // 512 + 90°/0.325 = 789
-      my_servo.setPosition(512 + 90 / 0.325, 50, HerkulexLed::Blue);
+      my_servo.setPosition(512 + 90 / 0.325, 100, HerkulexLed::Blue);
       my_servo.setTorqueOn();
       // my_servo_2.setPosition(512+10/0.325, 50, HerkulexLed::Blue);
       // my_servo_3.setPosition(512-30/0.325, 50, HerkulexLed::Yellow);
@@ -117,4 +123,64 @@ int detect_id(bool activate)
   {
     return 0; // Retourne 0 si la détection est désactivée
   }
+}
+
+void aimant_cote_centre(void)
+{
+  // met le couple
+  Pivot_gauche.setTorqueOn();
+  Pivot_droit.setTorqueOn();
+  
+  //prepare le mouvement synchro
+  herkulex_bus.prepareSynchronizedMove(100);
+
+  Pivot_gauche.setPosition(512-90/0.325, 100, HerkulexLed::Blue); // +90 pour mettre au centre
+  Pivot_droit.setPosition(512+90/0.325, 100, HerkulexLed::Blue); // -90 pour mettre au centre
+
+  // execute le mouvement
+  herkulex_bus.executeMove();
+}
+
+void aimant_cote_cote(void)
+{
+  // met le couple
+  Pivot_gauche.setTorqueOn();
+  Pivot_droit.setTorqueOn();
+  //prepare le mouvement synchro
+  herkulex_bus.prepareSynchronizedMove(100);
+
+  Pivot_gauche.setPosition(512+0/0.325, 100, HerkulexLed::Green); // 0° pour poser
+  Pivot_droit.setPosition(512+0/0.325, 100, HerkulexLed::Green); // +90 pour poser
+  // execute le mouvement
+  herkulex_bus.executeMove();
+}
+
+void aimant_cote_ecarter(void)
+{
+  // met le couple
+  Pivot_gauche.setTorqueOn();
+  Pivot_droit.setTorqueOn();
+  //prepare le mouvement synchro
+  herkulex_bus.prepareSynchronizedMove(100);
+
+  Pivot_gauche.setPosition(512+90/0.325, 100, HerkulexLed::Yellow); // -90° pour ecarter
+  Pivot_droit.setPosition(512-90/0.325, 100, HerkulexLed::Yellow); // +90 pour ecarter
+  // execute le mouvement
+  herkulex_bus.executeMove();
+}
+
+void cmd_aimant_centre(bool mouvement){
+  if(mouvement == RETIRER){
+    Aimant_centre.setTorqueOn();
+    Aimant_centre.setPosition(512+0/0.325, 100);
+  }
+  if(mouvement == ATTRAPER){
+    Aimant_centre.setTorqueOn();
+    Aimant_centre.setPosition(512+0/0.325, 100);
+  }
+}
+
+void test_servo_pivot_gauche(void){
+  Pivot_gauche.setTorqueOn();
+  Pivot_gauche.setPosition(512, 100);
 }
