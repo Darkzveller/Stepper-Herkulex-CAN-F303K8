@@ -146,13 +146,11 @@ void aimant_cote_cote(void)
   // met le couple
   Pivot_gauche.setTorqueOn();
   Pivot_droit.setTorqueOn();
-  //prepare le mouvement synchro
-  herkulex_bus.prepareSynchronizedMove(100);
+  //prepare le mouvement synchroX
 
   Pivot_gauche.setPosition(512+0/0.325, 100, HerkulexLed::Green); // 0° pour poser
   Pivot_droit.setPosition(512+0/0.325, 100, HerkulexLed::Green); // +90 pour poser
-  // execute le mouvement
-  herkulex_bus.executeMove();
+  // execute le mouvementX
 }
 
 void aimant_cote_ecarter(void)
@@ -161,23 +159,36 @@ void aimant_cote_ecarter(void)
   Pivot_gauche.setTorqueOn();
   Pivot_droit.setTorqueOn();
   //prepare le mouvement synchro
-  herkulex_bus.prepareSynchronizedMove(100);
 
   Pivot_gauche.setPosition(512+90/0.325, 100, HerkulexLed::Yellow); // -90° pour ecarter
   Pivot_droit.setPosition(512-90/0.325, 100, HerkulexLed::Yellow); // +90 pour ecarter
   // execute le mouvement
-  herkulex_bus.executeMove();
 }
 
 void cmd_aimant_centre(bool mouvement){
   if(mouvement == RETIRER){
     Aimant_centre.setTorqueOn();
-    Aimant_centre.setPosition(512+0/0.325, 100);
+    Aimant_centre.setPosition(512+45/0.325, 50);
   }
   if(mouvement == ATTRAPER){
     Aimant_centre.setTorqueOn();
-    Aimant_centre.setPosition(512+0/0.325, 100);
+    Aimant_centre.setPosition(512+0/0.325, 50);
   }
+}
+
+void cmd_aimant_cote(char mouvement){
+  Aimant_droit.setTorqueOn();
+  Aimant_gauche.setTorqueOn();
+  
+  if(mouvement == ATTRAPER){
+    Aimant_droit.setPosition(512+0, 50);
+    Aimant_gauche.setPosition(512+0, 50);
+  }
+  if(mouvement == RETIRER){
+    Aimant_droit.setPosition(512+90/0.325, 50);
+    Aimant_gauche.setPosition(512+-90/0.325, 50);
+  }
+  
 }
 
 void test_servo_pivot_gauche(void){

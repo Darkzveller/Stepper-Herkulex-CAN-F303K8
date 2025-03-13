@@ -1,4 +1,5 @@
 #include "STM32_CAN.h"
+#include <CAN.h>
 
 STM32_CAN Can( CAN1, DEF );  //Use PA11/12 pins for CAN1.
 //STM32_CAN Can( CAN1, ALT );  //Use PB8/9 pins for CAN1.
@@ -37,6 +38,36 @@ void sendCANMessage(int id, int data0, int data1, int data2, int data3, int data
     CAN_TX_msg.buf[7] = data7;
 
     Can.write(CAN_TX_msg);
-
 }
 
+char receiveCANMessage(int *id, char *adresse_tableau_data){ 
+    if(Can.read(CAN_RX_msg)){
+        if(msg_for_me(CAN_RX_msg.id)){
+            *id = CAN_RX_msg.id;
+            for(int i = 0; i < 8; i++){
+                *(adresse_tableau_data+i) = CAN_RX_msg.buf[i]; // met les datas dans le tableau
+            }
+            return 1; // retourne 1 pour dire que un msg est reçu et que c'est un id que l'on veut traiter
+        }
+        return 0; // pas id que l'on traite
+    }
+    else{
+        return 0;
+    } // pas de msg reçu
+}
+
+bool msg_for_me(int id_msg_rx){
+    // msg pour nous
+    if(id_msg_rx == HERKULEX_AIMANT_CENTRE){
+        return 1;
+    }
+    if(id_msg_rx == HERKULEX_AIMANT_COTE){
+        return 1;
+    }
+    if(id_msg_rx == HERKULEX_PIVOT_COTE){
+        return 1;
+    }
+
+    // msg pas pour nous
+    return 0; 
+}

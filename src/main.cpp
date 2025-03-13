@@ -4,6 +4,9 @@
 #include <CAN.h>
 
 bool activate_detect = false;
+int id_msg_can_rx; // ID des msg CAN recu
+char data_msg_can_rx[8]; // datas du msg CAN Reçu
+int i;
 // CAN can(PA_11, PA_12, 1000000); // CAN Rx pin name, CAN Tx pin name
 
 void setup()
@@ -33,12 +36,30 @@ void loop()
     // stepper(convert_angle_to_pas(-90), PAS_COMPLET, 0);
     // delay(250);
 
-    test_herkulex();
+    // test_herkulex();
 
     // sendCANMessage(0xFF,0x11,0x22,0,0,0,0,0,0);
     // delay(250);
-    
-   
+    if(receiveCANMessage(&id_msg_can_rx, data_msg_can_rx)){
+        if(id_msg_can_rx == HERKULEX_AIMANT_CENTRE){
+            cmd_aimant_centre(data_msg_can_rx[0]); // met le mouvement demandé
+        }
+        if(id_msg_can_rx == HERKULEX_AIMANT_COTE){
+            cmd_aimant_cote(data_msg_can_rx[0]); // met le mouvement demandé
+        }
+        if(id_msg_can_rx == HERKULEX_PIVOT_COTE){
+            if(data_msg_can_rx[0]==CENTRE){
+                aimant_cote_centre();
+            }
+            else if(data_msg_can_rx[0]==COTE){
+                aimant_cote_cote();
+            }
+            else if(data_msg_can_rx[0]==ECARTER){
+                aimant_cote_ecarter();
+            }
+        }
+    }
+
     if (Serial.available() > 0)
     {
         char c = Serial.read();
