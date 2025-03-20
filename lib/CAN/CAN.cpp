@@ -40,6 +40,10 @@ void sendCANMessage(int id, int data0, int data1, int data2, int data3, int data
     Can.write(CAN_TX_msg);
 }
 
+// id : l'id de la trame CAN reçu  
+// adresse_tableau_data : adresse du tableau dans laquelle on stocke les datas
+// Retourne 1 quand le msg est pour nous, 0 sinon ou si pas de msg
+// range les valeurs dans les variables d'entrées
 char receiveCANMessage(int *id, char *adresse_tableau_data){ 
     if(Can.read(CAN_RX_msg)){
         if(msg_for_me(CAN_RX_msg.id)){
@@ -56,15 +60,16 @@ char receiveCANMessage(int *id, char *adresse_tableau_data){
     } // pas de msg reçu
 }
 
+// filtre le message, retourne 1 si msg pour nous
 bool msg_for_me(int id_msg_rx){
     // msg pour nous
-    if(id_msg_rx == HERKULEX_AIMANT_CENTRE){
+    if(id_msg_rx == HERKULEX_AVANT_AIMANT_CENTRE){
         return 1;
     }
-    if(id_msg_rx == HERKULEX_AIMANT_COTE){
+    if(id_msg_rx == HERKULEX_AVANT_AIMANT_COTE){
         return 1;
     }
-    if(id_msg_rx == HERKULEX_PIVOT_COTE){
+    if(id_msg_rx == HERKULEX_AVANT_PIVOT_COTE){
         return 1;
     }
 
