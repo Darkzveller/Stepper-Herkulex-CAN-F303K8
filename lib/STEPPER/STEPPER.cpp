@@ -10,7 +10,8 @@
 #define PIN_M0 PB5
 #define PIN_M1 D9
 #define PIN_M2 D8
-#define PIN_FDC PA_1
+#define PIN_FDC_HAUT PA1
+#define PIN_FDC_BAS PA4
 
 // #define PIN_STBY PA5
 // #define PIN_STEP PA4
@@ -41,7 +42,8 @@ void initStepper()
   pinMode(PIN_M0, OUTPUT);
   pinMode(PIN_M1, OUTPUT);
   pinMode(PIN_M2, OUTPUT);
-  pinMode(PIN_FDC, INPUT_PULLUP);
+  pinMode(PIN_FDC_HAUT, INPUT_PULLDOWN);
+  pinMode(PIN_FDC_BAS, INPUT_PULLDOWN);
 
   // Appliquer les valeurs initiales
   digitalWrite(PIN_STBY, STBY);
@@ -77,11 +79,11 @@ int stepper(int swpulse, int microstep, bool up)
 {
   if (swpulse > 0)
   {
-    DIR = 1; // Sens avant
+    DIR = SENS_HAUT;
   }
   else if (swpulse < 0)
   {
-    DIR = 0;            // Sens arrière
+    DIR = SENS_BAS;
     swpulse = -swpulse; // Rendre positif pour la boucle
   }
   else
@@ -105,13 +107,19 @@ int stepper(int swpulse, int microstep, bool up)
   {
     STEP = 1;
     digitalWrite(PIN_STEP, STEP);
-    vTaskDelay(pdMS_TO_TICKS(10));
+    vTaskDelay(1);
     STEP = 0;
     digitalWrite(PIN_STEP, STEP);
-    vTaskDelay(pdMS_TO_TICKS(10));
+    vTaskDelay(2);
 
     // Arrêt si fin de course détectée
-    if (digitalRead(PIN_FDC) == 1 && up)
+    if ((digitalRead(PIN_FDC_HAUT) == 1) && (up) && (DIR == SENS_HAUT)) // si on monte
+    {
+      EN = 0;
+      digitalWrite(PIN_EN, EN);
+      return 1;
+    }
+    if ((digitalRead(PIN_FDC_BAS) == 1) && (up) && (DIR == SENS_BAS)) // si on descend
     {
       EN = 0;
       digitalWrite(PIN_EN, EN);

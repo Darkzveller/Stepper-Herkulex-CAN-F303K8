@@ -1,0 +1,17 @@
+#include "ID_CAN.h"
+
+/*
+Permet de facilement configurer le côté dans laquelle la carte sera monté
+Changer le OFFSET_CARTE_MPP pour changer le coté
+*/
+#define OFFSET_CARTE_MPP_AVANT 0x000
+#define OFFSET_CARTE_MPP_ARRIERE 0x010
+// offset de la carte utilisé
+#define OFFSET_CARTE_MPP OFFSET_CARTE_MPP_AVANT
+
+// ID des trames + offset carte
+#define BOOT_CARTE_MPP BOOT_CARTE_MPP_AVANT + OFFSET_CARTE_MPP 
+#define HERKULEX_AIMANT_COTE HERKULEX_AVANT_AIMANT_COTE + OFFSET_CARTE_MPP
+#define HERKULEX_AIMANT_CENTRE HERKULEX_AVANT_AIMANT_CENTRE + OFFSET_CARTE_MPP
+#define HERKULEX_PIVOT_COTE HERKULEX_AVANT_PIVOT_COTE + OFFSET_CARTE_MPP
+#define CMD_MPP CMD_MPP_AVANT + OFFSET_CARTE_MPP

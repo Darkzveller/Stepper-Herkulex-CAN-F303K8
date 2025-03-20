@@ -1,7 +1,6 @@
 #include <Arduino.h>
-#include <HardwareSerial.h>
-#include <HerkulexServo.h>
 #include "HERKULEX.h"
+
 // Définition des broches utilisées pour la communication série avec les servos Herkulex
 #define PIN_SW_RX PB7 // Broche utilisée pour la réception (RX)
 #define PIN_SW_TX PB6 // Broche utilisée pour la transmission (TX)

@@ -62,14 +62,17 @@ char receiveCANMessage(int *id, char *adresse_tableau_data){
 
 // filtre le message, retourne 1 si msg pour nous
 bool msg_for_me(int id_msg_rx){
-    // msg pour nous
-    if(id_msg_rx == HERKULEX_AVANT_AIMANT_CENTRE){
+    // msg pour nous, ceux de la carte avant si configuré en carte avant, carte arriere sinon
+    if(id_msg_rx == HERKULEX_AIMANT_CENTRE){
         return 1;
     }
-    if(id_msg_rx == HERKULEX_AVANT_AIMANT_COTE){
+    if(id_msg_rx == HERKULEX_AIMANT_COTE){
         return 1;
     }
-    if(id_msg_rx == HERKULEX_AVANT_PIVOT_COTE){
+    if(id_msg_rx == HERKULEX_PIVOT_COTE){
+        return 1;
+    }
+    if(id_msg_rx == CMD_MPP){
         return 1;
     }
 
