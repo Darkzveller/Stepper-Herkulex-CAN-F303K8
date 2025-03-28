@@ -3,24 +3,25 @@
 #include <STM32FreeRTOS.h>
 
 // Définition des broches
-#define PIN_STBY D7
-#define PIN_STEP D6
-#define PIN_DIR D3
-#define PIN_EN A2
-#define PIN_M0 PB5
-#define PIN_M1 D9
-#define PIN_M2 D8
-#define PIN_FDC_HAUT PA1
-#define PIN_FDC_BAS PA4
+// #define PIN_STBY D7
+// #define PIN_STEP D6
+// #define PIN_DIR D3
+// #define PIN_EN A2
+// #define PIN_M0 PB5
+// #define PIN_M1 D9
+// #define PIN_M2 D8
+// #define PIN_FDC_HAUT PA1
+// #define PIN_FDC_BAS PA4
 
-// #define PIN_STBY PA5
-// #define PIN_STEP PA4
-// #define PIN_DIR PA3
-// #define PIN_EN PB1
-// #define PIN_M0 PB0
-// #define PIN_M1 PA7
-// #define PIN_M2 PA6
-// #define PIN_FDC PA1
+#define PIN_STBY PA5
+#define PIN_STEP PA4
+#define PIN_DIR PA3
+#define PIN_EN PB1
+#define PIN_M0 PB0
+#define PIN_M1 PA7
+#define PIN_M2 PA6
+#define PIN_FDC_HAUT PA1
+#define PIN_FDC_BAS PA8
 
 // Variables de contrôle moteur
 bool STBY, STEP, DIR, EN, M0, M1, M2;

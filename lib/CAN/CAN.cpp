@@ -75,6 +75,12 @@ bool msg_for_me(int id_msg_rx){
     if(id_msg_rx == CMD_MPP){
         return 1;
     }
+    if(id_msg_rx == HERKULEX_PIVOT_PINCE){
+        return 1;
+    }
+    if(id_msg_rx == HERKULEX_PINCE){
+        return 1;
+    }
 
     // msg pas pour nous
     return 0; 

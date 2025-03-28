@@ -61,6 +61,7 @@ void loop()
 // Reçoit les trames CAN et prend ceux qui concernent la carte et les traite
 void Gestion_CAN(void *parametres)
 {
+    
     while (1)
     {
         // prend le mutex avant d'utiliser les periphériques séries
@@ -100,6 +101,13 @@ void Gestion_CAN(void *parametres)
                     // mode de fdc sur l'octet de 4
                     mode_fdc = data_msg_can_rx[4];
                     actionner = 1; // dis à la tache stepper de actionner le MPP
+                    Serial.println(nb_step);
+                    break;
+                case HERKULEX_PIVOT_PINCE:
+                    cmd_pivot_pince(data_msg_can_rx[0]);
+                    break;
+                case HERKULEX_PINCE:
+                    cmd_pince(data_msg_can_rx[0]);
                     break;
                 default:
                     break;
@@ -125,7 +133,6 @@ void Gestion_CAN(void *parametres)
             }
             xSemaphoreGive(mutex); // rend le mutex
         }
-
         vTaskDelay(pdMS_TO_TICKS(5)); // tache périodique de 5 ms
     }
 }
@@ -136,6 +143,7 @@ void Gestion_STEPPER(void *parametres)
     {
         // si on demande d'actionner avec le CAN
         if(actionner == 1){
+            Serial.println("stepper");
             stepper(nb_step, PAS_COMPLET, mode_fdc);
             actionner = 0; // a finit d'actionner le MPP
         }
@@ -149,3 +157,4 @@ void Gestion_STEPPER(void *parametres)
         vTaskDelay(pdMS_TO_TICKS(5)); // tache périodique de 5 ms
     }
 }
+

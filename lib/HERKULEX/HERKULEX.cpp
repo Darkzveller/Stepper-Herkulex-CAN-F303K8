@@ -14,6 +14,8 @@ HerkulexServo Aimant_gauche(herkulex_bus, SERVO_AIMANT_GAUCHE);
 HerkulexServo Aimant_droit(herkulex_bus, SERVO_AIMANT_DROIT);
 HerkulexServo Pivot_gauche(herkulex_bus, SERVO_PIVOT_GAUCHE);
 HerkulexServo Pivot_droit(herkulex_bus, SERVO_PIVOT_DROIT);
+HerkulexServo Pivot_pince(herkulex_bus, SERVO_PIVOT_PINCE);
+HerkulexServo Pince(herkulex_bus, SERVO_PINCE);
 // Création d'un objet servo avec l'adresse de diffusion (HERKULEX_BROADCAST_ID signifie tous les servos connectés)
 
 // Variables pour gérer l'intervalle de mise à jour
@@ -129,12 +131,12 @@ void aimant_cote_centre(void)
   // met le couple
   Pivot_gauche.setTorqueOn();
   Pivot_droit.setTorqueOn();
-  
-  //prepare le mouvement synchro
+
+  // prepare le mouvement synchro
   herkulex_bus.prepareSynchronizedMove(100);
 
-  Pivot_gauche.setPosition(512-90/0.325, 100, HerkulexLed::Blue); // +90 pour mettre au centre
-  Pivot_droit.setPosition(512+90/0.325, 100, HerkulexLed::Blue); // -90 pour mettre au centre
+  Pivot_gauche.setPosition(512 - 90 / 0.325, 100, HerkulexLed::Blue); // +90 pour mettre au centre
+  Pivot_droit.setPosition(512 + 90 / 0.325, 100, HerkulexLed::Blue);  // -90 pour mettre au centre
 
   // execute le mouvement
   herkulex_bus.executeMove();
@@ -145,10 +147,10 @@ void aimant_cote_cote(void)
   // met le couple
   Pivot_gauche.setTorqueOn();
   Pivot_droit.setTorqueOn();
-  //prepare le mouvement synchroX
+  // prepare le mouvement synchroX
 
-  Pivot_gauche.setPosition(512+0/0.325, 100, HerkulexLed::Green); // 0° pour poser
-  Pivot_droit.setPosition(512+0/0.325, 100, HerkulexLed::Green); // +90 pour poser
+  Pivot_gauche.setPosition(512 + 0 / 0.325, 100, HerkulexLed::Green); // 0° pour poser
+  Pivot_droit.setPosition(512 + 0 / 0.325, 100, HerkulexLed::Green);  // +90 pour poser
   // execute le mouvementX
 }
 
@@ -157,40 +159,68 @@ void aimant_cote_ecarter(void)
   // met le couple
   Pivot_gauche.setTorqueOn();
   Pivot_droit.setTorqueOn();
-  //prepare le mouvement synchro
+  // prepare le mouvement synchro
 
-  Pivot_gauche.setPosition(512+90/0.325, 100, HerkulexLed::Yellow); // -90° pour ecarter
-  Pivot_droit.setPosition(512-90/0.325, 100, HerkulexLed::Yellow); // +90 pour ecarter
+  Pivot_gauche.setPosition(512 + 90 / 0.325, 100, HerkulexLed::Yellow); // -90° pour ecarter
+  Pivot_droit.setPosition(512 - 90 / 0.325, 100, HerkulexLed::Yellow);  // +90 pour ecarter
   // execute le mouvement
 }
 
-void cmd_aimant_centre(bool mouvement){
-  if(mouvement == RETIRER){
+void cmd_aimant_centre(bool mouvement)
+{
+  if (mouvement == RETIRER)
+  {
     Aimant_centre.setTorqueOn();
-    Aimant_centre.setPosition(512+45/0.325, 50);
+    Aimant_centre.setPosition(512 + 45 / 0.325, 50);
   }
-  if(mouvement == ATTRAPER){
+  if (mouvement == ATTRAPER)
+  {
     Aimant_centre.setTorqueOn();
-    Aimant_centre.setPosition(512+0/0.325, 50);
+    Aimant_centre.setPosition(512 + 0 / 0.325, 50);
   }
 }
 
-void cmd_aimant_cote(char mouvement){
+void cmd_aimant_cote(char mouvement)
+{
   Aimant_droit.setTorqueOn();
   Aimant_gauche.setTorqueOn();
-  
-  if(mouvement == ATTRAPER){
-    Aimant_droit.setPosition(512+0, 50);
-    Aimant_gauche.setPosition(512+0, 50);
+
+  if (mouvement == ATTRAPER)
+  {
+    Aimant_droit.setPosition(512 + 0, 50);
+    Aimant_gauche.setPosition(512 + 0, 50);
   }
-  if(mouvement == RETIRER){
-    Aimant_droit.setPosition(512+90/0.325, 50);
-    Aimant_gauche.setPosition(512+-90/0.325, 50);
+  if (mouvement == RETIRER)
+  {
+    Aimant_droit.setPosition(512 + 90 / 0.325, 50);
+    Aimant_gauche.setPosition(512 + -90 / 0.325, 50);
   }
-  
 }
 
-void test_servo_pivot_gauche(void){
+void test_servo_pivot_gauche(void)
+{
   Pivot_gauche.setTorqueOn();
   Pivot_gauche.setPosition(512, 100);
+}
+
+void cmd_pivot_pince(bool mouvement){
+  Pivot_pince.setTorqueOn();
+  if(mouvement == DEPLOYER)
+  {
+    Pivot_pince.setPosition(512 + 90 /0.325, 50);
+  }
+  if(mouvement == RETRACTER)
+  {
+    Pivot_pince.setPosition(512 + 0 /0.325, 50);
+  }
+}
+
+void cmd_pince(bool mouvement){
+  Pince.setTorqueOn();
+  if(mouvement == ATTRAPER){
+    Pince.setPosition(512+130/0.325, 100);
+  }
+  if(mouvement == RETIRER){
+    Pince.setPosition(512+0/0.325, 100);
+  }
 }
