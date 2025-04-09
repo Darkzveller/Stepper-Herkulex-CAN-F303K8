@@ -14,8 +14,8 @@
 #define TRENTEDEUXIEME_DE_PAS 0b101  // M2=1, M1=0, M0=1
 #define SOIXANTEQUATRIEME_DE_PAS 0b110  // M2=1, M1=1, M0=0
 #define CENTVINGTHUITIEME_DE_PAS 0b111  // M2=1, M1=1, M0=1
-#define SENS_HAUT 1
-#define SENS_BAS 0
+#define SENS_HAUT 0
+#define SENS_BAS 1
 
 //* Fonction pour initialiser le moteur pas-à-pas
 void initStepper();
@@ -24,5 +24,6 @@ void blockStepper(void);
 //* Fonction pour la mise en route du moteur pas-à-pas
 int stepper(int swpulse, int microstep, bool up );
 int convert_angle_to_pas(int angle_deg);
+void display_FDC(void);
 
 #endif

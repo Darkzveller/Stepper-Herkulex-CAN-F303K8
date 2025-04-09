@@ -48,6 +48,7 @@ void setup()
     sendCANMessage(BOOT_CARTE_MPP, 1, 0, 0, 0, 0, 0, 0, 0); // signale que la carte a boot, pret à recevoir des ordres
     vTaskStartScheduler(); // lance le scheduler
     // Affiche si y'a un problème de mémoire
+    
     Serial.println("Insufficient RAM");
     while (1)
         ;
@@ -66,7 +67,8 @@ void Gestion_CAN(void *parametres)
     {
         // prend le mutex avant d'utiliser les periphériques séries
         if (xSemaphoreTake(mutex, (TickType_t)5) == pdTRUE)
-        {
+        {  
+            display_servo_position();
             // regarde si on a un msg can pour nous
             if (receiveCANMessage(&id_msg_can_rx, data_msg_can_rx))
             {
@@ -143,7 +145,8 @@ void Gestion_STEPPER(void *parametres)
     {
         // si on demande d'actionner avec le CAN
         if(actionner == 1){
-            Serial.println("stepper");
+            Serial.print("stepper");
+            Serial.println(nb_step);
             stepper(nb_step, PAS_COMPLET, mode_fdc);
             actionner = 0; // a finit d'actionner le MPP
         }

@@ -4,8 +4,8 @@
 #include <HerkulexServo.h>
 
 #define SERVO_AIMANT_CENTRE  0x04
-#define SERVO_AIMANT_GAUCHE  0x03 
-#define SERVO_AIMANT_DROIT  0x02
+#define SERVO_AIMANT_GAUCHE  0x02 
+#define SERVO_AIMANT_DROIT  0x03
 #define SERVO_PIVOT_GAUCHE 0x01
 #define SERVO_PIVOT_DROIT 0x05
 #define SERVO_PINCE 0x06
@@ -19,6 +19,13 @@
 #define RETRACTER 0
 #define DEPLOYER 1
 
+#define ANGLE_PINCE_ATTRAPER 130 
+#define ANGLE_PINCE_LACHER 0
+#define ANGLE_PIVOT_COTE_ECARTER -25 // + pour le droit, - gauche
+#define ANGLE_PIVOT_COTE_ATTRAPER 55
+#define ANGLE_PIVOT_COTE_ATTRAPER -115
+
+
 
 void init_serial_1_for_herkulex();
 void test_herkulex();
@@ -31,6 +38,7 @@ void cmd_aimant_cote(char mouvement);
 void test_servo_pivot_gauche(void);
 void cmd_pivot_pince(bool mouvement);
 void cmd_pince(bool mouvement);
+void display_servo_position(void);
 
 
 #endif

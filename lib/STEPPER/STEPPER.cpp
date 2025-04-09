@@ -43,8 +43,8 @@ void initStepper()
   pinMode(PIN_M0, OUTPUT);
   pinMode(PIN_M1, OUTPUT);
   pinMode(PIN_M2, OUTPUT);
-  pinMode(PIN_FDC_HAUT, INPUT_PULLDOWN);
-  pinMode(PIN_FDC_BAS, INPUT_PULLDOWN);
+  pinMode(PIN_FDC_HAUT, INPUT_PULLUP);
+  pinMode(PIN_FDC_BAS, INPUT_PULLUP);
 
   // Appliquer les valeurs initiales
   digitalWrite(PIN_STBY, STBY);
@@ -91,6 +91,7 @@ int stepper(int swpulse, int microstep, bool up)
   {
     return 0; // Ne rien faire si swpulse == 0
   }
+  if(up) swpulse = 200000;
 
   // Configurer le microstepping
   M0 = microstep & 0b001;
@@ -108,19 +109,19 @@ int stepper(int swpulse, int microstep, bool up)
   {
     STEP = 1;
     digitalWrite(PIN_STEP, STEP);
-    vTaskDelay(1);
+    vTaskDelay(pdMS_TO_TICKS(5));
     STEP = 0;
     digitalWrite(PIN_STEP, STEP);
-    vTaskDelay(2);
+    vTaskDelay(pdMS_TO_TICKS(5));
 
     // Arrêt si fin de course détectée
-    if ((digitalRead(PIN_FDC_HAUT) == 1) && (up) && (DIR == SENS_HAUT)) // si on monte
+    if ((digitalRead(PIN_FDC_HAUT) == 0) && (up) && (DIR == SENS_HAUT)) // si on monte
     {
       EN = 0;
       digitalWrite(PIN_EN, EN);
       return 1;
     }
-    if ((digitalRead(PIN_FDC_BAS) == 1) && (up) && (DIR == SENS_BAS)) // si on descend
+    if ((digitalRead(PIN_FDC_BAS) == 0) && (up) && (DIR == SENS_BAS)) // si on descend
     {
       EN = 0;
       digitalWrite(PIN_EN, EN);
@@ -139,4 +140,11 @@ int convert_angle_to_pas(int angle_deg)
 
   int pas = PAS_PAR_TOUR * angle_deg / 360.0;
   return pas;
+}
+
+void display_FDC(void){
+  Serial.print("FDC_HAUT : ");
+  Serial.print(digitalRead(PIN_FDC_HAUT));
+  Serial.print(" | FDC_BAS : ");
+  Serial.println(digitalRead(PIN_FDC_BAS));
 }
