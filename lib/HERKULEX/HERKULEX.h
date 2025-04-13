@@ -39,6 +39,14 @@ void test_servo_pivot_gauche(void);
 void cmd_pivot_pince(bool mouvement);
 void cmd_pince(bool mouvement);
 void display_servo_position(void);
+void get_all_servo_pos(
+    float *pos_servo_pivot_gauche,
+    float *pos_servo_pivot_droit,
+    float *pos_servo_aimant_droit,
+    float *pos_servo_aimant_gauche,
+    float *pos_servo_aimant_centre,
+    float *pos_servo_pince,
+    float *pos_servo_pivot_pince);
 
 
 #endif
