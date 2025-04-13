@@ -197,49 +197,74 @@ void cmd_aimant_cote(char mouvement)
   }
 }
 
-void cmd_pivot_pince(bool mouvement){
+void cmd_pivot_pince(bool mouvement)
+{
   Pivot_pince.setTorqueOn();
-  if(mouvement == DEPLOYER)
+  if (mouvement == DEPLOYER)
   {
-    Pivot_pince.setPosition(512 + 90 /0.325, 50);
+    Pivot_pince.setPosition(512 + 90 / 0.325, 50);
   }
-  if(mouvement == RETRACTER)
+  if (mouvement == RETRACTER)
   {
-    Pivot_pince.setPosition(512 + 0 /0.325, 50);
+    Pivot_pince.setPosition(512 + 0 / 0.325, 50);
   }
 }
 
-void cmd_pince(bool mouvement){
+void cmd_pince(bool mouvement)
+{
   Pince.setTorqueOn();
-  if(mouvement == ATTRAPER){
-    Pince.setPosition(512+ANGLE_PINCE_ATTRAPER / 0.325, 100);
+  if (mouvement == ATTRAPER)
+  {
+    Pince.setPosition(512 + ANGLE_PINCE_ATTRAPER / 0.325, 100);
   }
-  if(mouvement == RETIRER){
-    Pince.setPosition(512+ANGLE_PINCE_LACHER/0.325, 100);
+  if (mouvement == RETIRER)
+  {
+    Pince.setPosition(512 + ANGLE_PINCE_LACHER / 0.325, 100);
   }
 }
 
 // affiche la position en °
-void display_servo_position(void){
+void display_servo_position(void)
+{
   Serial.print("Aimant_centre : ");
-  Serial.print(0.325*(Aimant_centre.getPosition()-512));
+  Serial.print(0.325 * (Aimant_centre.getPosition() - 512));
   Serial.print(" | Aimant_gauche : ");
-  Serial.print(0.325*(Aimant_gauche.getPosition()-512));
+  Serial.print(0.325 * (Aimant_gauche.getPosition() - 512));
   Serial.print(" | Aimant_droit : ");
-  Serial.print(0.325*(Aimant_droit.getPosition()-512));
+  Serial.print(0.325 * (Aimant_droit.getPosition() - 512));
   Serial.print(" | pivot_gauche : ");
-  Serial.print(0.325*(Pivot_gauche.getPosition()-512));
+  Serial.print(0.325 * (Pivot_gauche.getPosition() - 512));
   Serial.print(" | pivot_droit : ");
-  Serial.print(0.325*(Pivot_droit.getPosition()-512));
+  Serial.print(0.325 * (Pivot_droit.getPosition() - 512));
   Serial.print(" | pivot_pince : ");
-  Serial.print(0.325*(Pivot_pince.getPosition()-512));
+  Serial.print(0.325 * (Pivot_pince.getPosition() - 512));
   Serial.print(" | pince : ");
-  Serial.println(0.325*(Pince.getPosition()-512));
+  Serial.println(0.325 * (Pince.getPosition() - 512));
 }
 
-
 // Allume la led en bleu pour les herkulex connectées
-void test_connexion(){
+void test_connexion()
+{
   // test pour voir lequel est connectée
   my_servo.setLedColor(HerkulexLed::Green); // allume la led des herkulex connectées
+}
+
+// donne la position de tout les servos en °, range tout des les variables
+void get_all_servo_pos(
+    float *pos_servo_pivot_gauche,
+    float *pos_servo_pivot_droit,
+    float *pos_servo_aimant_droit,
+    float *pos_servo_aimant_gauche,
+    float *pos_servo_aimant_centre,
+    float *pos_servo_pince,
+    float *pos_servo_pivot_pince)
+{
+  // range les pos des servos en ° dans les variables
+  *pos_servo_pivot_gauche = (Pivot_gauche.getPosition() - 512) * 0.325;
+  *pos_servo_pivot_droit = (Pivot_droit.getPosition() - 512) * 0.325;
+  *pos_servo_aimant_droit = (Aimant_droit.getPosition() - 512) * 0.325;
+  *pos_servo_aimant_gauche = (Aimant_gauche.getPosition() - 512) * 0.325;
+  *pos_servo_aimant_centre = (Aimant_centre.getPosition() - 512) * 0.325;
+  *pos_servo_pince = (Pince.getPosition() - 512) * 0.325;
+  *pos_servo_pivot_pince = (Pivot_pince.getPosition() - 512) * 0.325;
 }
