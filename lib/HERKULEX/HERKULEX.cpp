@@ -241,11 +241,5 @@ void display_servo_position(void){
 // Allume la led en bleu pour les herkulex connectées
 void test_connexion(){
   // test pour voir lequel est connectée
-  Aimant_centre.setLedColor(HerkulexLed::Blue);
-  Aimant_gauche.setLedColor(HerkulexLed::Blue);
-  Aimant_droit.setLedColor(HerkulexLed::Blue);
-  Pivot_droit.setLedColor(HerkulexLed::Blue);
-  Pivot_gauche.setLedColor(HerkulexLed::Blue);
-  Pince.setLedColor(HerkulexLed::Blue);
-  Pivot_pince.setLedColor(HerkulexLed::Blue);
+  my_servo.setLedColor(HerkulexLed::Green); // allume la led des herkulex connectées
 }

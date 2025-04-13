@@ -109,10 +109,10 @@ int stepper(int swpulse, int microstep, bool up)
   {
     STEP = 1;
     digitalWrite(PIN_STEP, STEP);
-    vTaskDelay(pdMS_TO_TICKS(5));
+    vTaskDelay(pdMS_TO_TICKS(1));
     STEP = 0;
     digitalWrite(PIN_STEP, STEP);
-    vTaskDelay(pdMS_TO_TICKS(5));
+    vTaskDelay(pdMS_TO_TICKS(4));
 
     // Arrêt si fin de course détectée
     if ((digitalRead(PIN_FDC_HAUT) == 0) && (up) && (DIR == SENS_HAUT)) // si on monte
