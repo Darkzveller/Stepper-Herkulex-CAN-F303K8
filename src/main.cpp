@@ -8,8 +8,9 @@
 
 
 SemaphoreHandle_t mutex = NULL; // handle du mutex
+TaskHandle_t build = nullptr; // handle de la contruction
 
-bool activate_detect = false;
+bool activate_detect = false; 
 int id_msg_can_rx;       // ID des msg CAN recu
 char data_msg_can_rx[8]; // datas du msg CAN Reçu
 int i = 0;
@@ -19,8 +20,10 @@ int nb_step;
 // mode fdc ou non, actionner : 1 = actionner les MPP, 0 = ne pas les actionner
 bool mode_fdc, actionner = 0;
 
+
 void Gestion_STEPPER(void *parametres);
 void Gestion_CAN(void *parametres);
+void build_floor2(void*);
 
 void setup()
 {
@@ -42,6 +45,7 @@ void setup()
     mutex = xSemaphoreCreateMutex(); // cree le mutex
     xTaskCreate(Gestion_STEPPER, "Gestion_STEPPER", configMINIMAL_STACK_SIZE, NULL, 2, NULL);
     xTaskCreate(Gestion_CAN, "Gestion_CAN", configMINIMAL_STACK_SIZE, NULL, 1, NULL);
+    xTaskCreate(build_floor2, "bluid_floor2", configMINIMAL_STACK_SIZE, NULL, 2, &build);
     // check for creation errors
 
     // start scheduler
@@ -113,6 +117,14 @@ void Gestion_CAN(void *parametres)
                 case HERKULEX_PINCE:
                     cmd_pince(data_msg_can_rx[0]);
                     break;
+                // case CONSTRUIRE_ETAGE:
+                /*
+                    L'avantage de cette méthode c'est qu'on bouffe rien 
+                    En gros -> pas de mutex rien
+                    On fait en quelque sorte une interruption tâche
+                */
+                    // xTaskNotifyGive(build) // on lance la tâche
+                    // break;
                 default:
                     break;
                 }
@@ -163,5 +175,41 @@ void Gestion_STEPPER(void *parametres)
         // }
         vTaskDelay(pdMS_TO_TICKS(5)); // tache périodique de 5 ms
     }
+}
+
+// tache qui permet de constuire un étage
+void build_floor2(void*){
+    /*
+        L'idée c'est de ne pas bloquer le reste du code d'où la tache
+        La tache exe les mouvements dans l'odre du switch case
+        La tahce vérifie les mouvemements des herkulex en permanance
+        Toutes les variables sont locales comme ça ! 
+    */
+
+    bool building = true; // pour la boucle de construction
+    int8_t step_2_build = 0; // pour le switch case de construction
+
+    while(true){
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+        while(building){
+            switch (step_2_build)
+            {
+            case 0: // default mais je préfère case 0 même si c'est pareil
+                break;
+            case 1: // on choppe la planche 
+                break;
+            case 50: // on a finit (bon mtn faut faire le reste)
+                building = false;
+                break;
+            }
+
+            vTaskDelay(pdMS_TO_TICKS(5)); // tache qui se répète toutes les 5ms
+        }
+
+        step_2_build = 0;
+        building = true;
+
+    }
+
 }
 
