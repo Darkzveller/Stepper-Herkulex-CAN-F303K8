@@ -242,9 +242,13 @@ void build_floor2(void*){
         pos_pivots_sides[1] = Pivot_droit
     */ 
 
+    // on atteint que ça soit à un pour continuer 
+    bool stepper_finish = 0;
+
     // data que l'on va envoyer au stepper pour tourner
-    uint32_t data_stepper_msg[8] = {0x00,0x00,0x00,0x00,0xFF,0x00,0x00,0x00};
+    // char data_stepper_msg[8] = {0x00,0x00,0x00,0x00,0xFF,0x00,0x00,0x00};
     // tableau a bien configurer je suis pas sûr 
+    // J'ai mis un char comme pour le msg can comme ça on reste pareil
 
 
     while(true){
@@ -282,14 +286,35 @@ void build_floor2(void*){
             case 2:
                 // on vérifie la position de la pince
                 pos_pince = get_servo_pos(Pince);
-
+                //j'ai un doute sur la position de la pince
                 if(pos_pince == 512 + ANGLE_PINCE_ATTRAPER / 0.325){
-
+                    // on dit hé oh réveille toi et prends le tableau !
+                    // c'est comme si c'était une fct avec un argument
+                    // xTaskNotify(stepper_handle,(uint32_t)data_stepper_msg,eSetValueWithOverwrite);
                     step_2_build = 3;
-
                 } 
                 break;
-            case 50: // on a finit 
+            case 3:
+                //on lit ce que la fct stepper nous renvoit
+                stepper_finish = stepper(50000,PAS_COMPLET,1);
+                if(stepper_finish){
+                    blockStepper();
+                    aimant_cote_cote();
+                    step_2_build = 4;
+                }
+                break;
+            case 4:
+                pos_pivots_sides[0] = get_servo_pos(Pivot_gauche);
+                pos_pivots_sides[1] = get_servo_pos(Pivot_droit);
+
+                if(pos_pivots_sides[0] == 512 + ANGLE_PIVOT_COTE_ECARTER / 0.325 &&
+                    pos_pivots_sides[1] == 512 - ANGLE_PIVOT_COTE_ECARTER / 0.325
+                ) {
+                    // unblockStepper() //comme je ne sais pas totalement son fct je mets en commentaire mais dès que je peux je fais la fonction
+                    step_2_build = 5;
+                }
+                break;
+            case 5: // on a finit 
                 building = false;
                 break;
             }
