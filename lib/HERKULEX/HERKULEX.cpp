@@ -1,22 +1,7 @@
 #include <Arduino.h>
 #include "HERKULEX.h"
 
-// Définition des broches utilisées pour la communication série avec les servos Herkulex
-#define PIN_SW_RX PB7 // Broche utilisée pour la réception (RX)
-#define PIN_SW_TX PB6 // Broche utilisée pour la transmission (TX)
 
-HardwareSerial Serial1(USART1);
-HerkulexServoBus herkulex_bus(Serial1);
-// Initialisation de la liaison série matérielle sur l'UART1
-HerkulexServo my_servo(herkulex_bus, HERKULEX_BROADCAST_ID);
-HerkulexServo Aimant_centre(herkulex_bus, SERVO_AIMANT_CENTRE);
-HerkulexServo Aimant_gauche(herkulex_bus, SERVO_AIMANT_GAUCHE);
-HerkulexServo Aimant_droit(herkulex_bus, SERVO_AIMANT_DROIT);
-HerkulexServo Pivot_gauche(herkulex_bus, SERVO_PIVOT_GAUCHE);
-HerkulexServo Pivot_droit(herkulex_bus, SERVO_PIVOT_DROIT);
-HerkulexServo Pivot_pince(herkulex_bus, SERVO_PIVOT_PINCE);
-HerkulexServo Pince(herkulex_bus, SERVO_PINCE);
-// Création d'un objet servo avec l'adresse de diffusion (HERKULEX_BROADCAST_ID signifie tous les servos connectés)
 
 // Variables pour gérer l'intervalle de mise à jour
 unsigned long last_update = 0; // Stocke le temps de la dernière mise à jour
@@ -202,11 +187,11 @@ void cmd_pivot_pince(bool mouvement)
   Pivot_pince.setTorqueOn();
   if (mouvement == DEPLOYER)
   {
-    Pivot_pince.setPosition(512 + 90 / 0.325, 50);
+    Pivot_pince.setPosition(512 + 90 / 0.325, 50); // angle final de 90
   }
   if (mouvement == RETRACTER)
   {
-    Pivot_pince.setPosition(512 + 0 / 0.325, 50);
+    Pivot_pince.setPosition(512 + 0 / 0.325, 50); // angle final de 0
   }
 }
 
@@ -247,6 +232,11 @@ void test_connexion()
 {
   // test pour voir lequel est connectée
   my_servo.setLedColor(HerkulexLed::Green); // allume la led des herkulex connectées
+}
+
+// si on veut la position d'un servo en particulier
+int16_t get_servo_pos(HerkulexServo servo){
+  return (servo.getPosition()-512) * 0.325; // on retrun la position du servo voulu
 }
 
 // donne la position de tout les servos en °, range tout des les variables

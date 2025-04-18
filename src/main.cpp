@@ -182,23 +182,66 @@ void build_floor2(void*){
     /*
         L'idée c'est de ne pas bloquer le reste du code d'où la tache
         La tache exe les mouvements dans l'odre du switch case
-        La tahce vérifie les mouvemements des herkulex en permanance
+        La tache vérifie les mouvemements des herkulex en permanence
         Toutes les variables sont locales comme ça ! 
     */
 
     bool building = true; // pour la boucle de construction
-    int8_t step_2_build = 0; // pour le switch case de construction
+    int8_t step_2_build = 0; // pour le switch case de construction*
+
+    // position du pivot de la pince
+    int16_t pos_pivot_mid = 0; 
+
+    // position de la pince
+    int16_t pos_pince = 0;
+
+    // positions des deux pivots des côtés dans une liste
+    int16_t pos_pivots_sides[2];
+    /*
+        pos_pivots_sides[0] = Pivot_gauche
+        pos_pivots_sides[1] = Pivot_droit
+    */ 
+
 
     while(true){
+
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+
         while(building){
             switch (step_2_build)
             {
-            case 0: // default mais je préfère case 0 même si c'est pareil
+                /*
+                    Je suis parti du principe qu'on peut faire 3 herkulex
+                    en même temps 
+                */
+
+            case 0: // pas besoin de default comme on commence qu'une fois réveillé
+                cmd_pivot_pince(DEPLOYER); // déploit pivot pince
+                aimant_cote_ecarter(); // pivots des côtés
+                step_2_build = 1;
                 break;
-            case 1: // on choppe la planche 
+            case 1: 
+                // on attend d'arriver au bon endroit pour le pivot
+                pos_pivot_mid = get_servo_pos(Pivot_pince);
+                // on vérifie si on est bon sur le décalage des boîtes
+                pos_pivots_sides[0],pos_pivots_sides[1] = get_servo_pos(Pivot_gauche),
+                get_servo_pos(Pivot_droit);
+                
+                if(pos_pivots_sides[0] == 512 + ANGLE_PIVOT_COTE_ECARTER / 0.325 &&
+                    pos_pivots_sides[1] == 512 - ANGLE_PIVOT_COTE_ECARTER / 0.325 &&
+                    pos_pivot_mid == (512 + 90) / 0.325
+                ){
+                    cmd_pince(ATTRAPER);
+                    step_2_build = 2;
+                }
                 break;
-            case 50: // on a finit (bon mtn faut faire le reste)
+            case 2:
+                // on vérifie la position de la pince
+                pos_pince = get_servo_pos(Pince);
+
+                if(pos_pince == 512 + ANGLE_PINCE_ATTRAPER / 0.325) step_2_build = 3;
+                break;
+            case 50: // on a finit 
                 building = false;
                 break;
             }

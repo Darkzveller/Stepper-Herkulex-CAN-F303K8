@@ -39,6 +39,7 @@ void test_servo_pivot_gauche(void);
 void cmd_pivot_pince(bool mouvement);
 void cmd_pince(bool mouvement);
 void display_servo_position(void);
+int16_t get_servo_pos(HerkulexServo servo);
 void get_all_servo_pos(
     float *pos_servo_pivot_gauche,
     float *pos_servo_pivot_droit,
@@ -50,3 +51,27 @@ void get_all_servo_pos(
 
 
 #endif
+
+// Définition des broches utilisées pour la communication série avec les servos Herkulex
+#define PIN_SW_RX PB7 // Broche utilisée pour la réception (RX)
+#define PIN_SW_TX PB6 // Broche utilisée pour la transmission (TX)
+
+/*
+    J'ai décalé les créations d'objet et define ici pour y avoir accès partout
+    Comme ça je peux aussi m'en servir dans le main au lieu de recréer des objets
+    et créer un problème avec 2 fois le même objet mais qui n'a pas le même nom
+*/
+
+HardwareSerial Serial1(USART1);
+HerkulexServoBus herkulex_bus(Serial1);
+// Initialisation de la liaison série matérielle sur l'UART1
+
+HerkulexServo my_servo(herkulex_bus, HERKULEX_BROADCAST_ID);
+HerkulexServo Aimant_centre(herkulex_bus, SERVO_AIMANT_CENTRE);
+HerkulexServo Aimant_gauche(herkulex_bus, SERVO_AIMANT_GAUCHE);
+HerkulexServo Aimant_droit(herkulex_bus, SERVO_AIMANT_DROIT);
+HerkulexServo Pivot_gauche(herkulex_bus, SERVO_PIVOT_GAUCHE);
+HerkulexServo Pivot_droit(herkulex_bus, SERVO_PIVOT_DROIT);
+HerkulexServo Pivot_pince(herkulex_bus, SERVO_PIVOT_PINCE);
+HerkulexServo Pince(herkulex_bus, SERVO_PINCE);
+// Création d'un objet servo avec l'adresse de diffusion (HERKULEX_BROADCAST_ID signifie tous les servos connectés)
