@@ -8,7 +8,8 @@
 
 
 SemaphoreHandle_t mutex = NULL; // handle du mutex
-TaskHandle_t build = nullptr; // handle de la contruction
+TaskHandle_t build_handle = nullptr; // handle de la contruction
+TaskHandle_t stepper_handle = nullptr; // handle du stepper
 
 bool activate_detect = false; 
 int id_msg_can_rx;       // ID des msg CAN recu
@@ -24,6 +25,7 @@ bool mode_fdc, actionner = 0;
 void Gestion_STEPPER(void *parametres);
 void Gestion_CAN(void *parametres);
 void build_floor2(void*);
+void task_interrupt_stepper(void*);
 
 void setup()
 {
@@ -45,7 +47,8 @@ void setup()
     mutex = xSemaphoreCreateMutex(); // cree le mutex
     xTaskCreate(Gestion_STEPPER, "Gestion_STEPPER", configMINIMAL_STACK_SIZE, NULL, 2, NULL);
     xTaskCreate(Gestion_CAN, "Gestion_CAN", configMINIMAL_STACK_SIZE, NULL, 1, NULL);
-    xTaskCreate(build_floor2, "bluid_floor2", configMINIMAL_STACK_SIZE, NULL, 2, &build);
+    xTaskCreate(build_floor2, "bluid_floor2", configMINIMAL_STACK_SIZE, NULL, 2, &build_handle);
+    xTaskCreate(task_interrupt_stepper, "task_interrupt_stepper", configMINIMAL_STACK_SIZE, NULL, 3, &stepper_handle);
     // check for creation errors
 
     // start scheduler
@@ -123,7 +126,7 @@ void Gestion_CAN(void *parametres)
                     En gros -> pas de mutex rien
                     On fait en quelque sorte une interruption tâche
                 */
-                    // xTaskNotifyGive(build) // on lance la tâche
+                    // xTaskNotifyGive(build_handle) // on lance la tâche
                     // break;
                 default:
                     break;
@@ -177,6 +180,43 @@ void Gestion_STEPPER(void *parametres)
     }
 }
 
+void task_interrupt_stepper(void*){
+    /*
+        Même principe que build_2_floor on fait une task interruption pour éviter
+        l'utilisation au plus des mutex et pour faire en sorte que la tâche ne 
+        mange rien tant qu'elle n'est pas envoyée
+
+        J'ai prévu qu'on puisse lui envoyer un peu tout que ça soit du CAN ou juste
+        un message classique comme ce qu'on a dans build_floor2
+    */
+
+    int local_nb_step = 0; // valeur locale des pas
+    bool local_fdc_mode = false; // valeure locale du mode
+    uint32_t data_swooper; // sorte de pointeur pour aller chercher la data
+
+    while(true){
+        // on attend la notif et on prend la data rx qui nous est envoyé
+        xTaskNotifyWait(0, 0xFFFFFFFF, &data_swooper, portMAX_DELAY);
+        // méthode qui devrait être efficace mais obligé d'avoir des "uint"
+
+        char* local_data = (char*)data_swooper; 
+        // on peut donc traiter le message rx de manière locale ! 
+
+        // nbre de pas codé sur les 4 premiers octet de la trame
+        local_nb_step = *((int*)local_data);
+        // mode de fdc sur l'octet de 4
+        local_fdc_mode = local_data[4];
+
+        stepper(local_nb_step, PAS_COMPLET, local_fdc_mode);
+        blockStepper();
+        
+        local_nb_step = 0;
+        local_fdc_mode = false;
+
+        // comme pour la tâche build_floor2 une fois que c'est terminé : sleep sleep
+    }
+}
+
 // tache qui permet de constuire un étage
 void build_floor2(void*){
     /*
@@ -202,6 +242,10 @@ void build_floor2(void*){
         pos_pivots_sides[1] = Pivot_droit
     */ 
 
+    // data que l'on va envoyer au stepper pour tourner
+    uint32_t data_stepper_msg[8] = {0x00,0x00,0x00,0x00,0xFF,0x00,0x00,0x00};
+    // tableau a bien configurer je suis pas sûr 
+
 
     while(true){
 
@@ -224,8 +268,8 @@ void build_floor2(void*){
                 // on attend d'arriver au bon endroit pour le pivot
                 pos_pivot_mid = get_servo_pos(Pivot_pince);
                 // on vérifie si on est bon sur le décalage des boîtes
-                pos_pivots_sides[0],pos_pivots_sides[1] = get_servo_pos(Pivot_gauche),
-                get_servo_pos(Pivot_droit);
+                pos_pivots_sides[0] = get_servo_pos(Pivot_gauche);
+                pos_pivots_sides[1] = get_servo_pos(Pivot_droit);
                 
                 if(pos_pivots_sides[0] == 512 + ANGLE_PIVOT_COTE_ECARTER / 0.325 &&
                     pos_pivots_sides[1] == 512 - ANGLE_PIVOT_COTE_ECARTER / 0.325 &&
@@ -239,7 +283,11 @@ void build_floor2(void*){
                 // on vérifie la position de la pince
                 pos_pince = get_servo_pos(Pince);
 
-                if(pos_pince == 512 + ANGLE_PINCE_ATTRAPER / 0.325) step_2_build = 3;
+                if(pos_pince == 512 + ANGLE_PINCE_ATTRAPER / 0.325){
+
+                    step_2_build = 3;
+
+                } 
                 break;
             case 50: // on a finit 
                 building = false;
