@@ -25,7 +25,7 @@ bool mode_fdc, actionner = 0;
 void Gestion_STEPPER(void *parametres);
 void Gestion_CAN(void *parametres);
 void build_floor2(void*);
-void task_interrupt_stepper(void*);
+// void task_interrupt_stepper(void*);
 
 void setup()
 {
@@ -45,10 +45,10 @@ void setup()
     delay(100);
 
     mutex = xSemaphoreCreateMutex(); // cree le mutex
-    xTaskCreate(Gestion_STEPPER, "Gestion_STEPPER", configMINIMAL_STACK_SIZE, NULL, 2, NULL);
+    xTaskCreate(Gestion_STEPPER, "Gestion_STEPPER", configMINIMAL_STACK_SIZE, NULL, 2, &stepper_handle);
     xTaskCreate(Gestion_CAN, "Gestion_CAN", configMINIMAL_STACK_SIZE, NULL, 1, NULL);
     xTaskCreate(build_floor2, "bluid_floor2", configMINIMAL_STACK_SIZE, NULL, 2, &build_handle);
-    xTaskCreate(task_interrupt_stepper, "task_interrupt_stepper", configMINIMAL_STACK_SIZE, NULL, 3, &stepper_handle);
+    // xTaskCreate(task_interrupt_stepper, "task_interrupt_stepper", configMINIMAL_STACK_SIZE, NULL, 3, &stepper_handle);
     // check for creation errors
 
     // start scheduler
@@ -111,7 +111,7 @@ void Gestion_CAN(void *parametres)
                     nb_step = *((int*)&data_msg_can_rx);
                     // mode de fdc sur l'octet de 4
                     mode_fdc = data_msg_can_rx[4];
-                    actionner = 1; // dis à la tache stepper de actionner le MPP
+                    xTaskNotifyGive(stepper_handle); // on lance la tâche 
                     Serial.println(nb_step);
                     break;
                 case HERKULEX_PIVOT_PINCE:
@@ -157,18 +157,17 @@ void Gestion_CAN(void *parametres)
 }
 
 // tache qui actionne le pas à pas
-void Gestion_STEPPER(void *parametres)
+void Gestion_STEPPER(void *parametres) //v1
 {
     while (1)
     {
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         // si on demande d'actionner avec le CAN
-        if(actionner == 1){
-            Serial.print("stepper");
-            Serial.println(nb_step);
-            stepper(nb_step, PAS_COMPLET, mode_fdc);
-            blockStepper();
-            actionner = 0; // a finit d'actionner le MPP
-        }
+        // Serial.print("stepper");
+        // Serial.println(nb_step);
+        stepper(nb_step, PAS_COMPLET, mode_fdc);
+        blockStepper();
+
 
         // prend le mutex avant d'utiliser les periphériques séries
         // if (xSemaphoreTake(mutex, (TickType_t)5) == pdTRUE)
@@ -176,46 +175,46 @@ void Gestion_STEPPER(void *parametres)
         //     Serial.println("stepper");
         //     xSemaphoreGive(mutex);
         // }
-        vTaskDelay(pdMS_TO_TICKS(5)); // tache périodique de 5 ms
+        // vTaskDelay(pdMS_TO_TICKS(5)); // tache périodique de 5 ms
     }
 }
 
-void task_interrupt_stepper(void*){
-    /*
-        Même principe que build_2_floor on fait une task interruption pour éviter
-        l'utilisation au plus des mutex et pour faire en sorte que la tâche ne 
-        mange rien tant qu'elle n'est pas envoyée
+// void task_interrupt_stepper(void*){ //v2 test
+//     /*
+//         Même principe que build_2_floor on fait une task interruption pour éviter
+//         l'utilisation au plus des mutex et pour faire en sorte que la tâche ne 
+//         mange rien tant qu'elle n'est pas envoyée
 
-        J'ai prévu qu'on puisse lui envoyer un peu tout que ça soit du CAN ou juste
-        un message classique comme ce qu'on a dans build_floor2
-    */
+//         J'ai prévu qu'on puisse lui envoyer un peu tout que ça soit du CAN ou juste
+//         un message classique comme ce qu'on a dans build_floor2
+//     */
 
-    int local_nb_step = 0; // valeur locale des pas
-    bool local_fdc_mode = false; // valeure locale du mode
-    uint32_t data_swooper; // sorte de pointeur pour aller chercher la data
+//     int local_nb_step = 0; // valeur locale des pas
+//     bool local_fdc_mode = false; // valeure locale du mode
+//     uint32_t data_swooper; // sorte de pointeur pour aller chercher la data
 
-    while(true){
-        // on attend la notif et on prend la data rx qui nous est envoyé
-        xTaskNotifyWait(0, 0xFFFFFFFF, &data_swooper, portMAX_DELAY);
-        // méthode qui devrait être efficace mais obligé d'avoir des "uint"
+//     while(true){
+//         // on attend la notif et on prend la data rx qui nous est envoyé
+//         xTaskNotifyWait(0, 0xFFFFFFFF, &data_swooper, portMAX_DELAY);
+//         // méthode qui devrait être efficace mais obligé d'avoir des "uint"
 
-        char* local_data = (char*)data_swooper; 
-        // on peut donc traiter le message rx de manière locale ! 
+//         char* local_data = (char*)data_swooper; 
+//         // on peut donc traiter le message rx de manière locale ! 
 
-        // nbre de pas codé sur les 4 premiers octet de la trame
-        local_nb_step = *((int*)local_data);
-        // mode de fdc sur l'octet de 4
-        local_fdc_mode = local_data[4];
+//         // nbre de pas codé sur les 4 premiers octet de la trame
+//         local_nb_step = *((int*)local_data);
+//         // mode de fdc sur l'octet de 4
+//         local_fdc_mode = local_data[4];
 
-        stepper(local_nb_step, PAS_COMPLET, local_fdc_mode);
-        blockStepper();
+//         stepper(local_nb_step, PAS_COMPLET, local_fdc_mode);
+//         blockStepper();
         
-        local_nb_step = 0;
-        local_fdc_mode = false;
+//         local_nb_step = 0;
+//         local_fdc_mode = false;
 
-        // comme pour la tâche build_floor2 une fois que c'est terminé : sleep sleep
-    }
-}
+//         // comme pour la tâche build_floor2 une fois que c'est terminé : sleep sleep
+//     }
+// }
 
 // tache qui permet de constuire un étage
 void build_floor2(void*){
@@ -244,12 +243,6 @@ void build_floor2(void*){
 
     // on atteint que ça soit à un pour continuer 
     bool stepper_finish = 0;
-
-    // data que l'on va envoyer au stepper pour tourner
-    // char data_stepper_msg[8] = {0x00,0x00,0x00,0x00,0xFF,0x00,0x00,0x00};
-    // tableau a bien configurer je suis pas sûr 
-    // J'ai mis un char comme pour le msg can comme ça on reste pareil
-
 
     while(true){
 
