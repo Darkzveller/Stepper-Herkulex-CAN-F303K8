@@ -18,36 +18,38 @@
 #define ECARTER 2 // cannette cote écarté pour monter la planche 
 #define RETRACTER 0
 #define DEPLOYER 1
+#define AVANT_CONSTRUCTION 2
 
 #define ANGLE_PINCE_ATTRAPER 130 
 #define ANGLE_PINCE_LACHER 0
-#define ANGLE_PIVOT_COTE_ECARTER -25 // + pour le droit, - gauche
-#define ANGLE_PIVOT_COTE_ATTRAPER 55
-#define ANGLE_PIVOT_COTE_ATTRAPER -115
+#define ANGLE_PIVOT_PINCE_AVANT_CONSTRUCTION 80
+#define ANGLE_PIVOT_COTE_ECARTER 25 // + pour le droit, - gauche
+#define ANGLE_PIVOT_COTE_ATTRAPER -50
+#define ANGLE_PIVOT_COTE_CENTRE -113
 
 
 
 void init_serial_1_for_herkulex();
 void test_herkulex();
+void test_connexion();
 int detect_id(bool activate);
 void aimant_cote_centre(void);
 void aimant_cote_ecarter(void);
-void aimant_cote_cote(void);
+void aimant_cote_attraper(void);
 void cmd_aimant_centre(bool mouvement);
 void cmd_aimant_cote(char mouvement);
-void test_servo_pivot_gauche(void);
-void cmd_pivot_pince(bool mouvement);
+void cmd_pivot_pince(char mouvement);
 void cmd_pince(bool mouvement);
 void display_servo_position(void);
 int16_t get_servo_pos(HerkulexServo servo);
 void get_all_servo_pos(
-    float *pos_servo_pivot_gauche,
-    float *pos_servo_pivot_droit,
-    float *pos_servo_aimant_droit,
-    float *pos_servo_aimant_gauche,
-    float *pos_servo_aimant_centre,
-    float *pos_servo_pince,
-    float *pos_servo_pivot_pince);
+    short *pos_servo_pivot_gauche,
+    short *pos_servo_pivot_droit,
+    short *pos_servo_aimant_droit,
+    short *pos_servo_aimant_gauche,
+    short *pos_servo_aimant_centre,
+    short *pos_servo_pince,
+    short *pos_servo_pivot_pince);
 
 
 #endif
@@ -62,16 +64,5 @@ void get_all_servo_pos(
     et créer un problème avec 2 fois le même objet mais qui n'a pas le même nom
 */
 
-HardwareSerial Serial1(USART1);
-HerkulexServoBus herkulex_bus(Serial1);
-// Initialisation de la liaison série matérielle sur l'UART1
 
-HerkulexServo my_servo(herkulex_bus, HERKULEX_BROADCAST_ID);
-HerkulexServo Aimant_centre(herkulex_bus, SERVO_AIMANT_CENTRE);
-HerkulexServo Aimant_gauche(herkulex_bus, SERVO_AIMANT_GAUCHE);
-HerkulexServo Aimant_droit(herkulex_bus, SERVO_AIMANT_DROIT);
-HerkulexServo Pivot_gauche(herkulex_bus, SERVO_PIVOT_GAUCHE);
-HerkulexServo Pivot_droit(herkulex_bus, SERVO_PIVOT_DROIT);
-HerkulexServo Pivot_pince(herkulex_bus, SERVO_PIVOT_PINCE);
-HerkulexServo Pince(herkulex_bus, SERVO_PINCE);
 // Création d'un objet servo avec l'adresse de diffusion (HERKULEX_BROADCAST_ID signifie tous les servos connectés)

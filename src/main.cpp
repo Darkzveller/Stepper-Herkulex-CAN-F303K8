@@ -6,25 +6,23 @@
 #include <CONFIG_CARTE.h>
 // offset pour différencier les deux cartes MPP, avant, ou arrière
 
-
-SemaphoreHandle_t mutex = NULL; // handle du mutex
-TaskHandle_t build_handle = nullptr; // handle de la contruction
+SemaphoreHandle_t mutex = NULL;        // handle du mutex
+TaskHandle_t build_handle = nullptr;   // handle de la contruction
 TaskHandle_t stepper_handle = nullptr; // handle du stepper
 
-bool activate_detect = false; 
+bool activate_detect = false;
 int id_msg_can_rx;       // ID des msg CAN recu
 char data_msg_can_rx[8]; // datas du msg CAN Reçu
 int i = 0;
 
 // nbre de pas
 int nb_step;
-// mode fdc ou non, actionner : 1 = actionner les MPP, 0 = ne pas les actionner
-bool mode_fdc, actionner = 0;
-
+// mode fdc ou non, flag_stepper : 1 = MPP actionné, 0 = pas actionné
+bool mode_fdc, actionner = 0, flag_stepper = 0; 
 
 void Gestion_STEPPER(void *parametres);
 void Gestion_CAN(void *parametres);
-void build_floor2(void*);
+void build_floor2(void *);
 // void task_interrupt_stepper(void*);
 
 void setup()
@@ -53,11 +51,10 @@ void setup()
 
     // start scheduler
     sendCANMessage(BOOT_CARTE_MPP, 1, 0, 0, 0, 0, 0, 0, 0); // signale que la carte a boot, pret à recevoir des ordres
-    vTaskStartScheduler(); // lance le scheduler
+    vTaskStartScheduler();                                  // lance le scheduler
 
-   
     // Affiche si y'a un problème de mémoire
-    
+
     Serial.println("Insufficient RAM");
     while (1)
         ;
@@ -71,13 +68,13 @@ void loop()
 // Reçoit les trames CAN et prend ceux qui concernent la carte et les traite
 void Gestion_CAN(void *parametres)
 {
-    
+
     while (1)
     {
+        
         // prend le mutex avant d'utiliser les periphériques séries
         if (xSemaphoreTake(mutex, (TickType_t)5) == pdTRUE)
-        {  
-            // display_servo_position();
+        {
             // regarde si on a un msg can pour nous
             if (receiveCANMessage(&id_msg_can_rx, data_msg_can_rx))
             {
@@ -99,7 +96,7 @@ void Gestion_CAN(void *parametres)
                     }
                     else if (data_msg_can_rx[0] == COTE)
                     {
-                        aimant_cote_cote();
+                        aimant_cote_attraper();
                     }
                     else if (data_msg_can_rx[0] == ECARTER)
                     {
@@ -108,10 +105,10 @@ void Gestion_CAN(void *parametres)
                     break;
                 case CMD_MPP:
                     // nbre de pas codé sur les 4 premiers octet de la trame
-                    nb_step = *((int*)&data_msg_can_rx);
+                    nb_step = *((int *)&data_msg_can_rx);
                     // mode de fdc sur l'octet de 4
                     mode_fdc = data_msg_can_rx[4];
-                    xTaskNotifyGive(stepper_handle); // on lance la tâche 
+                    xTaskNotifyGive(stepper_handle); // on lance la tâche
                     Serial.println(nb_step);
                     break;
                 case HERKULEX_PIVOT_PINCE:
@@ -120,14 +117,22 @@ void Gestion_CAN(void *parametres)
                 case HERKULEX_PINCE:
                     cmd_pince(data_msg_can_rx[0]);
                     break;
-                // case CONSTRUIRE_ETAGE:
-                /*
-                    L'avantage de cette méthode c'est qu'on bouffe rien 
-                    En gros -> pas de mutex rien
-                    On fait en quelque sorte une interruption tâche
-                */
-                    // xTaskNotifyGive(build_handle) // on lance la tâche
-                    // break;
+                case CONTRUIRE_PREPARER:
+                    cmd_pivot_pince(AVANT_CONSTRUCTION); // déploit pivot pince
+                    aimant_cote_attraper();            // pivots des côtés
+                    // met à la pos pour attraper les cannetes
+                    cmd_aimant_centre(ATTRAPER);
+                    cmd_aimant_cote(ATTRAPER);
+                    cmd_pince(RETIRER);
+                    break;
+                case CONSTRUIRE_2ETAGE:
+                    /*
+                        L'avantage de cette méthode c'est qu'on bouffe rien
+                        En gros -> pas de mutex rien
+                        On fait en quelque sorte une interruption tâche
+                    */
+                    xTaskNotifyGive(build_handle); // on lance la tâche
+                    break;
                 default:
                     break;
                 }
@@ -157,18 +162,16 @@ void Gestion_CAN(void *parametres)
 }
 
 // tache qui actionne le pas à pas
-void Gestion_STEPPER(void *parametres) //v1
+void Gestion_STEPPER(void *parametres) // v1
 {
     while (1)
     {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-        // si on demande d'actionner avec le CAN
-        // Serial.print("stepper");
-        // Serial.println(nb_step);
         stepper(nb_step, PAS_COMPLET, mode_fdc);
         blockStepper();
+        flag_stepper = 0;
 
-
+        // exemple de mutex
         // prend le mutex avant d'utiliser les periphériques séries
         // if (xSemaphoreTake(mutex, (TickType_t)5) == pdTRUE)
         // {
@@ -182,7 +185,7 @@ void Gestion_STEPPER(void *parametres) //v1
 // void task_interrupt_stepper(void*){ //v2 test
 //     /*
 //         Même principe que build_2_floor on fait une task interruption pour éviter
-//         l'utilisation au plus des mutex et pour faire en sorte que la tâche ne 
+//         l'utilisation au plus des mutex et pour faire en sorte que la tâche ne
 //         mange rien tant qu'elle n'est pas envoyée
 
 //         J'ai prévu qu'on puisse lui envoyer un peu tout que ça soit du CAN ou juste
@@ -198,8 +201,8 @@ void Gestion_STEPPER(void *parametres) //v1
 //         xTaskNotifyWait(0, 0xFFFFFFFF, &data_swooper, portMAX_DELAY);
 //         // méthode qui devrait être efficace mais obligé d'avoir des "uint"
 
-//         char* local_data = (char*)data_swooper; 
-//         // on peut donc traiter le message rx de manière locale ! 
+//         char* local_data = (char*)data_swooper;
+//         // on peut donc traiter le message rx de manière locale !
 
 //         // nbre de pas codé sur les 4 premiers octet de la trame
 //         local_nb_step = *((int*)local_data);
@@ -208,7 +211,7 @@ void Gestion_STEPPER(void *parametres) //v1
 
 //         stepper(local_nb_step, PAS_COMPLET, local_fdc_mode);
 //         blockStepper();
-        
+
 //         local_nb_step = 0;
 //         local_fdc_mode = false;
 
@@ -217,98 +220,96 @@ void Gestion_STEPPER(void *parametres) //v1
 // }
 
 // tache qui permet de constuire un étage
-void build_floor2(void*){
+void build_floor2(void *)
+{
     /*
         L'idée c'est de ne pas bloquer le reste du code d'où la tache
         La tache exe les mouvements dans l'odre du switch case
         La tache vérifie les mouvemements des herkulex en permanence
-        Toutes les variables sont locales comme ça ! 
+        Toutes les variables sont locales comme ça !
     */
 
-    bool building = true; // pour la boucle de construction
+    bool building = true;    // pour la boucle de construction
     int8_t step_2_build = 0; // pour le switch case de construction*
 
     // position du pivot de la pince
-    int16_t pos_pivot_mid = 0; 
+    short pos_pivot_mid = 0;
 
     // position de la pince
-    int16_t pos_pince = 0;
+    short pos_pince = 0;
 
     // positions des deux pivots des côtés dans une liste
-    int16_t pos_pivots_sides[2];
+    short pos_pivot_gauche;
+    short pos_pivot_droit;
+
+    // positions des servo des aimants
+    short pos_aimant_centre;
+    short pos_aimant_droit;
+    short pos_aimant_gauche;
     /*
         pos_pivots_sides[0] = Pivot_gauche
         pos_pivots_sides[1] = Pivot_droit
-    */ 
+    */
 
-    // on atteint que ça soit à un pour continuer 
+    // on atteint que ça soit à un pour continuer
     bool stepper_finish = 0;
 
-    while(true){
+    unsigned long last_update = 0; // Stocke le temps de la dernière mise à jour
+    unsigned long now = 0;         // Stocke le temps actuel
 
+    char data_stepper_msg[8];
+
+    while (true)
+    {   
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-
-        while(building){
+        // met à jour la valeur de last_update
+        now = millis();
+        last_update = now;
+        while (building)
+        {
+            now = millis();
             switch (step_2_build)
             {
                 /*
                     Je suis parti du principe qu'on peut faire 3 herkulex
-                    en même temps 
+                    en même temps
                 */
 
-            case 0: // pas besoin de default comme on commence qu'une fois réveillé
-                cmd_pivot_pince(DEPLOYER); // déploit pivot pince
-                aimant_cote_ecarter(); // pivots des côtés
-                step_2_build = 1;
-                break;
-            case 1: 
-                // on attend d'arriver au bon endroit pour le pivot
-                pos_pivot_mid = get_servo_pos(Pivot_pince);
-                // on vérifie si on est bon sur le décalage des boîtes
-                pos_pivots_sides[0] = get_servo_pos(Pivot_gauche);
-                pos_pivots_sides[1] = get_servo_pos(Pivot_droit);
+            case 0:                                  // pas besoin de default comme on commence qu'une fois réveillé
+                // attrape la planche et ecarte les aimants pour monter plus tard
+                cmd_pivot_pince(DEPLOYER);
+                cmd_pince(ATTRAPER);
+                aimant_cote_ecarter();
                 
-                if(pos_pivots_sides[0] == 512 + ANGLE_PIVOT_COTE_ECARTER / 0.325 &&
-                    pos_pivots_sides[1] == 512 - ANGLE_PIVOT_COTE_ECARTER / 0.325 &&
-                    pos_pivot_mid == (512 + 90) / 0.325
-                ){
-                    cmd_pince(ATTRAPER);
+                if((now - last_update) > 2000){
+                    Serial.println(now - last_update);
+                    // étape suivante dis au MPP de monter
+                    last_update = now;
+                    nb_step = 1, mode_fdc = 1, flag_stepper = 1;
+                    xTaskNotifyGive(stepper_handle);
+                    step_2_build = 1;
+                }
+                break;
+            case 1:
+                // quand le MPP aura finit il pass à l'étape d'après
+                if(flag_stepper == 0){
+                    // le MPP a finit de monter
+                    Serial.println("next step");
                     step_2_build = 2;
+                    last_update = now;
                 }
                 break;
             case 2:
-                // on vérifie la position de la pince
-                pos_pince = get_servo_pos(Pince);
-                //j'ai un doute sur la position de la pince
-                if(pos_pince == 512 + ANGLE_PINCE_ATTRAPER / 0.325){
-                    // on dit hé oh réveille toi et prends le tableau !
-                    // c'est comme si c'était une fct avec un argument
-                    // xTaskNotify(stepper_handle,(uint32_t)data_stepper_msg,eSetValueWithOverwrite);
+                // remet les cannettes sur le coté
+                aimant_cote_attraper();
+                if(now - last_update > 2000){
                     step_2_build = 3;
-                } 
+                    last_update = now;
+                }
                 break;
             case 3:
-                //on lit ce que la fct stepper nous renvoit
-                stepper_finish = stepper(50000,PAS_COMPLET,1);
-                if(stepper_finish){
-                    blockStepper();
-                    aimant_cote_cote();
-                    step_2_build = 4;
-                }
-                break;
-            case 4:
-                pos_pivots_sides[0] = get_servo_pos(Pivot_gauche);
-                pos_pivots_sides[1] = get_servo_pos(Pivot_droit);
-
-                if(pos_pivots_sides[0] == 512 + ANGLE_PIVOT_COTE_ECARTER / 0.325 &&
-                    pos_pivots_sides[1] == 512 - ANGLE_PIVOT_COTE_ECARTER / 0.325
-                ) {
-                    // unblockStepper() //comme je ne sais pas totalement son fct je mets en commentaire mais dès que je peux je fais la fonction
-                    step_2_build = 5;
-                }
-                break;
-            case 5: // on a finit 
                 building = false;
+                Serial.println("finished building");
                 break;
             }
 
@@ -317,8 +318,5 @@ void build_floor2(void*){
 
         step_2_build = 0;
         building = true;
-
     }
-
 }
-

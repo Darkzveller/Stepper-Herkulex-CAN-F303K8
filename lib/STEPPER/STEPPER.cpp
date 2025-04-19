@@ -20,8 +20,9 @@
 #define PIN_M0 PB0
 #define PIN_M1 PA7
 #define PIN_M2 PA6
-#define PIN_FDC_HAUT PA1
-#define PIN_FDC_BAS PA8
+#define PIN_FDC_HAUT PA1 // J8
+#define PIN_FDC_BAS PA8 // J3
+// FDC HAUT 
 
 // Variables de contrôle moteur
 bool STBY, STEP, DIR, EN, M0, M1, M2;

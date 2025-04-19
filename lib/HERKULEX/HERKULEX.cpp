@@ -1,7 +1,18 @@
 #include <Arduino.h>
 #include "HERKULEX.h"
 
+HardwareSerial Serial1(USART1);
+HerkulexServoBus herkulex_bus(Serial1);
+// Initialisation de la liaison série matérielle sur l'UART1
 
+HerkulexServo my_servo(herkulex_bus, HERKULEX_BROADCAST_ID);
+HerkulexServo Aimant_centre(herkulex_bus, SERVO_AIMANT_CENTRE);
+HerkulexServo Aimant_gauche(herkulex_bus, SERVO_AIMANT_GAUCHE);
+HerkulexServo Aimant_droit(herkulex_bus, SERVO_AIMANT_DROIT);
+HerkulexServo Pivot_gauche(herkulex_bus, SERVO_PIVOT_GAUCHE);
+HerkulexServo Pivot_droit(herkulex_bus, SERVO_PIVOT_DROIT);
+HerkulexServo Pivot_pince(herkulex_bus, SERVO_PIVOT_PINCE);
+HerkulexServo Pince(herkulex_bus, SERVO_PINCE);
 
 // Variables pour gérer l'intervalle de mise à jour
 unsigned long last_update = 0; // Stocke le temps de la dernière mise à jour
@@ -120,22 +131,22 @@ void aimant_cote_centre(void)
   // prepare le mouvement synchro
   herkulex_bus.prepareSynchronizedMove(100);
 
-  Pivot_gauche.setPosition(512 + 115 / 0.325, 100, HerkulexLed::Blue); // +90 pour mettre au centre
-  Pivot_droit.setPosition(512 - 115 / 0.325, 100, HerkulexLed::Blue);  // -90 pour mettre au centre
+  Pivot_gauche.setPosition(512 + ANGLE_PIVOT_COTE_CENTRE / 0.325, 100, HerkulexLed::Blue); // +90 pour mettre au centre
+  Pivot_droit.setPosition(512 - ANGLE_PIVOT_COTE_CENTRE / 0.325, 100, HerkulexLed::Blue);  // -90 pour mettre au centre
 
   // execute le mouvement
   herkulex_bus.executeMove();
 }
 
-void aimant_cote_cote(void)
+void aimant_cote_attraper(void)
 {
   // met le couple
   Pivot_gauche.setTorqueOn();
   Pivot_droit.setTorqueOn();
   // prepare le mouvement synchroX
 
-  Pivot_gauche.setPosition(512 + ANGLE_PIVOT_COTE_ECARTER / 0.325, 100, HerkulexLed::Green); // 0° pour poser
-  Pivot_droit.setPosition(512 - ANGLE_PIVOT_COTE_ECARTER / 0.325, 100, HerkulexLed::Green);  // +90 pour poser
+  Pivot_gauche.setPosition(512 + ANGLE_PIVOT_COTE_ATTRAPER / 0.325, 100, HerkulexLed::Green); // 0° pour poser
+  Pivot_droit.setPosition(512 - ANGLE_PIVOT_COTE_ATTRAPER / 0.325, 100, HerkulexLed::Green);  // +90 pour poser
   // execute le mouvementX
 }
 
@@ -182,7 +193,7 @@ void cmd_aimant_cote(char mouvement)
   }
 }
 
-void cmd_pivot_pince(bool mouvement)
+void cmd_pivot_pince(char mouvement)
 {
   Pivot_pince.setTorqueOn();
   if (mouvement == DEPLOYER)
@@ -192,6 +203,9 @@ void cmd_pivot_pince(bool mouvement)
   if (mouvement == RETRACTER)
   {
     Pivot_pince.setPosition(512 + 0 / 0.325, 50); // angle final de 0
+  }
+  if(mouvement == AVANT_CONSTRUCTION){
+    Pivot_pince.setPosition(512 + ANGLE_PIVOT_PINCE_AVANT_CONSTRUCTION / 0.325, 50);
   }
 }
 
@@ -211,20 +225,22 @@ void cmd_pince(bool mouvement)
 // affiche la position en °
 void display_servo_position(void)
 {
-  Serial.print("Aimant_centre : ");
-  Serial.print(0.325 * (Aimant_centre.getPosition() - 512));
-  Serial.print(" | Aimant_gauche : ");
-  Serial.print(0.325 * (Aimant_gauche.getPosition() - 512));
-  Serial.print(" | Aimant_droit : ");
-  Serial.print(0.325 * (Aimant_droit.getPosition() - 512));
-  Serial.print(" | pivot_gauche : ");
-  Serial.print(0.325 * (Pivot_gauche.getPosition() - 512));
-  Serial.print(" | pivot_droit : ");
-  Serial.print(0.325 * (Pivot_droit.getPosition() - 512));
-  Serial.print(" | pivot_pince : ");
-  Serial.print(0.325 * (Pivot_pince.getPosition() - 512));
-  Serial.print(" | pince : ");
-  Serial.println(0.325 * (Pince.getPosition() - 512));
+  Serial.println(my_servo.readRam(HerkulexRamRegister::CalibratedPosition));
+  // Serial.print("Aimant_centre : ");
+  // Serial.print(Pivot_pince.getPosition());
+  // // Serial.print(0.325 * (Aimant_centre.getPosition() - 512));
+  // Serial.print(" | Aimant_gauche : ");
+  // Serial.print(0.325 * (Aimant_gauche.getPosition() - 512));
+  // Serial.print(" | Aimant_droit : ");
+  // Serial.print(0.325 * (Aimant_droit.getPosition() - 512));
+  // Serial.print(" | pivot_gauche : ");
+  // Serial.print(0.325 * (Pivot_gauche.getPosition() - 512));
+  // Serial.print(" | pivot_droit : ");
+  // Serial.print(0.325 * (Pivot_droit.getPosition() - 512));
+  // Serial.print(" | pivot_pince : ");
+  // Serial.print(0.325 * (Pivot_pince.getPosition() - 512));
+  // Serial.print(" | pince : ");
+  // Serial.println(0.325 * (Pince.getPosition() - 512));
 }
 
 // Allume la led en bleu pour les herkulex connectées
@@ -241,13 +257,13 @@ int16_t get_servo_pos(HerkulexServo servo){
 
 // donne la position de tout les servos en °, range tout des les variables
 void get_all_servo_pos(
-    float *pos_servo_pivot_gauche,
-    float *pos_servo_pivot_droit,
-    float *pos_servo_aimant_droit,
-    float *pos_servo_aimant_gauche,
-    float *pos_servo_aimant_centre,
-    float *pos_servo_pince,
-    float *pos_servo_pivot_pince)
+  short *pos_servo_pivot_gauche,
+  short *pos_servo_pivot_droit,
+  short *pos_servo_aimant_droit,
+  short *pos_servo_aimant_gauche,
+  short *pos_servo_aimant_centre,
+  short *pos_servo_pince,
+  short *pos_servo_pivot_pince)
 {
   // range les pos des servos en ° dans les variables
   *pos_servo_pivot_gauche = (Pivot_gauche.getPosition() - 512) * 0.325;
