@@ -29,6 +29,8 @@
 
 
 
+
+
 void init_serial_1_for_herkulex();
 void test_herkulex();
 void test_connexion();
@@ -57,6 +59,7 @@ void get_all_servo_pos(
 // Définition des broches utilisées pour la communication série avec les servos Herkulex
 #define PIN_SW_RX PB7 // Broche utilisée pour la réception (RX)
 #define PIN_SW_TX PB6 // Broche utilisée pour la transmission (TX)
+
 
 /*
     J'ai décalé les créations d'objet et define ici pour y avoir accès partout
