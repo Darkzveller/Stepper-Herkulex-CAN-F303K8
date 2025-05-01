@@ -53,8 +53,6 @@ void setup()
     xTaskCreate(build_floor2, "bluid_floor2", configMINIMAL_STACK_SIZE, NULL, 2, &build_handle);
     // xTaskCreate(task_interrupt_stepper, "task_interrupt_stepper", configMINIMAL_STACK_SIZE, NULL, 3, &stepper_handle);
     // check for creation errors
-    pinMode(PF0, OUTPUT);
-    pinMode(PF1, OUTPUT);
 
     // start scheduler
     sendCANMessage(BOOT_CARTE_MPP, 1, 0, 0, 0, 0, 0, 0, 0); // signale que la carte a boot, pret à recevoir des ordres
@@ -123,19 +121,19 @@ void Gestion_CAN(void *parametres)
                     xTaskNotifyGive(stepper_handle); // on lance la tâche
                     Serial.println(nb_step);
                     break;
-                case HERKULEX_PIVOT_PINCE:
-                    cmd_pivot_pince(data_msg_can_rx[0]);
+                case HERKULEX_PIVOT_POMPE:
+                    cmd_pivot_pompe(data_msg_can_rx[0]);
                     break;
                 case HERKULEX_PINCE:
-                    cmd_pince(data_msg_can_rx[0]);
+                    // cmd_pince(data_msg_can_rx[0]);
                     break;
                 case CONTRUIRE_PREPARER:
-                    cmd_pivot_pince(AVANT_CONSTRUCTION); // déploit pivot pince
-                    aimant_cote_attraper();            // pivots des côtés
+                    restart_all_servo();
+                    cmd_pivot_pompe(RETRACTER); // déploit pivot pince
+                    aimant_cote_attraper();  // pivots des côtés
                     // met à la pos pour attraper les cannetes
                     cmd_aimant_centre(ATTRAPER);
                     cmd_aimant_cote(ATTRAPER);
-                    cmd_pince(RETIRER);
                     break;
                 case CONSTRUIRE_2ETAGE:
                     /*
@@ -244,39 +242,50 @@ void build_floor2(void *)
 
             case 0:                                  // pas besoin de default comme on commence qu'une fois réveillé
                 // attrape la planche et ecarte les aimants pour monter plus tard
-                cmd_pivot_pince(DEPLOYER);
+                cmd_pivot_pompe(DEPLOYER);
                 cmd_pompe(ATTRAPER);
                 aimant_cote_ecarter();
-                
-                if((now - last_update) > 2000){
+                step_2_build = 1;
+                break;
+            case 1:
+                // monte le MPP après 1 sec
+                if((now - last_update) > 800){
+                    restart_all_servo();
                     Serial.println(now - last_update);
                     // étape suivante dis au MPP de monter
                     last_update = now;
                     nb_step = 1, mode_fdc = 1, flag_stepper = 1;
                     xTaskNotifyGive(stepper_handle);
-                    step_2_build = 1;
-                }
-                break;
-            case 1:
-                // quand le MPP aura finit il pass à l'étape d'après
-                if(flag_stepper == 0){
-                    // le MPP a finit de monter
-                    Serial.println("next step");
                     step_2_build = 2;
-                    last_update = now;
                 }
                 break;
             case 2:
-                // remet les cannettes sur le coté
-                aimant_cote_attraper();
-                if(now - last_update > 2000){
+                // quand le MPP aura finit il passe à l'étape d'après
+                if(flag_stepper == 0){
+                    // le MPP a finit de monter
+                    // remet les cannettes sur le coté
+                    aimant_cote_attraper();
                     step_2_build = 3;
                     last_update = now;
                 }
                 break;
             case 3:
-                building = false;
-                Serial.println("finished building");
+                // Attend 2 secondes
+                if(now - last_update > 800){
+                    last_update = now;
+                    nb_step = -100, mode_fdc = 0, flag_stepper = 1;
+                    xTaskNotifyGive(stepper_handle);
+                    step_2_build = 4;
+                }
+                break;
+            case 4: 
+                // Attend que le MPP a fini descendre
+                if(flag_stepper == 0){ 
+                    // Le MPP a fini descendre
+                    building = false;
+                    Serial.println("finished building");
+                    sendCANMessage(CONSTRUIRE_TERMINEE, 0, 0, 0, 0, 0, 0, 0, 0);
+                }
                 break;
             }
 

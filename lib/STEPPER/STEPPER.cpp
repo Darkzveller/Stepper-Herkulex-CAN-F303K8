@@ -73,6 +73,23 @@ void blockStepper()
   digitalWrite(PIN_M2, M2);
 }
 
+void UnlockStepper(void)
+{
+  // Débloque le MPP
+  STBY = 1;
+  EN = 0;
+  M0 = 1;
+  M1 = 1;
+  M2 = 1;
+
+  digitalWrite(PIN_STBY, STBY);
+  digitalWrite(PIN_EN, EN);
+  digitalWrite(PIN_M0, M0);
+  digitalWrite(PIN_M1, M1);
+  digitalWrite(PIN_M2, M2);
+}
+
+
 // Fonction pour faire avancer le moteur pas à pas 
 // swpulse : nombre de pas, + : avant - : arrière
 // microstep : type de pas
@@ -110,10 +127,10 @@ int stepper(int swpulse, int microstep, bool up)
   {
     STEP = 1;
     digitalWrite(PIN_STEP, STEP);
-    vTaskDelay(pdMS_TO_TICKS(1));
+    vTaskDelay(1);
     STEP = 0;
     digitalWrite(PIN_STEP, STEP);
-    vTaskDelay(pdMS_TO_TICKS(4));
+    vTaskDelay(1);
 
     // Arrêt si fin de course détectée
     if ((digitalRead(PIN_FDC_HAUT) == 0) && (up) && (DIR == SENS_HAUT)) // si on monte

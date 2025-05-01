@@ -40,10 +40,11 @@ void aimant_cote_ecarter(void);
 void aimant_cote_attraper(void);
 void cmd_aimant_centre(bool mouvement);
 void cmd_aimant_cote(char mouvement);
-void cmd_pivot_pince(char mouvement);
+void cmd_pivot_pompe(char mouvement);
 void cmd_pince(bool mouvement);
 void display_servo_position(void);
 int16_t get_servo_pos(HerkulexServo servo);
+void restart_all_servo(void);
 void get_all_servo_pos(
     short *pos_servo_pivot_gauche,
     short *pos_servo_pivot_droit,
@@ -52,6 +53,7 @@ void get_all_servo_pos(
     short *pos_servo_aimant_centre,
     short *pos_servo_pince,
     short *pos_servo_pivot_pince);
+
 
 
 #endif

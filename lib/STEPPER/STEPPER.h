@@ -20,6 +20,7 @@
 //* Fonction pour initialiser le moteur pas-à-pas
 void initStepper();
 void blockStepper(void);
+void UnlockStepper(void);
 
 //* Fonction pour la mise en route du moteur pas-à-pas
 int stepper(int swpulse, int microstep, bool up );

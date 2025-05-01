@@ -75,7 +75,7 @@ bool msg_for_me(int id_msg_rx){
     if(id_msg_rx == CMD_MPP){
         return 1;
     }
-    if(id_msg_rx == HERKULEX_PIVOT_PINCE){
+    if(id_msg_rx == HERKULEX_PIVOT_POMPE){
         return 1;
     }
     if(id_msg_rx == HERKULEX_PINCE){
@@ -85,6 +85,9 @@ bool msg_for_me(int id_msg_rx){
         return 1;
     }
     if(id_msg_rx == CONSTRUIRE_2ETAGE){
+        return 1;
+    }
+    if(id_msg_rx == CONSTRUIRE_AVANT_TERMINEE){
         return 1;
     }
 

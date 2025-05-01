@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include "HERKULEX.h"
+#include <STM32FreeRTOS.h>
 
 HardwareSerial Serial1(USART1);
 HerkulexServoBus herkulex_bus(Serial1);
@@ -129,10 +130,10 @@ void aimant_cote_centre(void)
   Pivot_droit.setTorqueOn();
 
   // prepare le mouvement synchro
-  herkulex_bus.prepareSynchronizedMove(100);
+  herkulex_bus.prepareSynchronizedMove(50);
 
-  Pivot_gauche.setPosition(512 + ANGLE_PIVOT_COTE_CENTRE / 0.325, 100, HerkulexLed::Blue); // +90 pour mettre au centre
-  Pivot_droit.setPosition(512 - ANGLE_PIVOT_COTE_CENTRE / 0.325, 100, HerkulexLed::Blue);  // -90 pour mettre au centre
+  Pivot_gauche.setPosition(512 + ANGLE_PIVOT_COTE_CENTRE / 0.325, 50, HerkulexLed::Blue); // +90 pour mettre au centre
+  Pivot_droit.setPosition(512 - ANGLE_PIVOT_COTE_CENTRE / 0.325, 50, HerkulexLed::Blue);  // -90 pour mettre au centre
 
   // execute le mouvement
   herkulex_bus.executeMove();
@@ -145,8 +146,8 @@ void aimant_cote_attraper(void)
   Pivot_droit.setTorqueOn();
   // prepare le mouvement synchroX
 
-  Pivot_gauche.setPosition(512 + ANGLE_PIVOT_COTE_ATTRAPER / 0.325, 100, HerkulexLed::Green); // 0° pour poser
-  Pivot_droit.setPosition(512 - ANGLE_PIVOT_COTE_ATTRAPER / 0.325, 100, HerkulexLed::Green);  // +90 pour poser
+  Pivot_gauche.setPosition(512 + ANGLE_PIVOT_COTE_ATTRAPER / 0.325, 50, HerkulexLed::Green); // 0° pour poser
+  Pivot_droit.setPosition(512 - ANGLE_PIVOT_COTE_ATTRAPER / 0.325, 50, HerkulexLed::Green);  // +90 pour poser
   // execute le mouvementX
 }
 
@@ -157,8 +158,8 @@ void aimant_cote_ecarter(void)
   Pivot_droit.setTorqueOn();
   // prepare le mouvement synchro
 
-  Pivot_gauche.setPosition(512 + ANGLE_PIVOT_COTE_ECARTER / 0.325, 100, HerkulexLed::Yellow); // -90° pour ecarter
-  Pivot_droit.setPosition(512 - ANGLE_PIVOT_COTE_ECARTER / 0.325, 100, HerkulexLed::Yellow);  // +90 pour ecarter
+  Pivot_gauche.setPosition(512 + ANGLE_PIVOT_COTE_ECARTER / 0.325, 50, HerkulexLed::Yellow); // -90° pour ecarter
+  Pivot_droit.setPosition(512 - ANGLE_PIVOT_COTE_ECARTER / 0.325, 50, HerkulexLed::Yellow);  // +90 pour ecarter
   // execute le mouvement
 }
 
@@ -193,19 +194,16 @@ void cmd_aimant_cote(char mouvement)
   }
 }
 
-void cmd_pivot_pince(char mouvement)
+void cmd_pivot_pompe(char mouvement)
 {
   Pivot_pince.setTorqueOn();
   if (mouvement == DEPLOYER)
   {
-    Pivot_pince.setPosition(512 + 90 / 0.325, 50); // angle final de 90
+    Pivot_pince.setPosition(512 + 0 / 0.325, 50); // angle final de 0
   }
   if (mouvement == RETRACTER)
   {
-    Pivot_pince.setPosition(512 + 0 / 0.325, 50); // angle final de 0
-  }
-  if(mouvement == AVANT_CONSTRUCTION){
-    Pivot_pince.setPosition(512 + ANGLE_PIVOT_PINCE_AVANT_CONSTRUCTION / 0.325, 50);
+    Pivot_pince.setPosition(512 - 90 / 0.325, 50); // angle final de -90
   }
 }
 
@@ -226,21 +224,21 @@ void cmd_pince(bool mouvement)
 void display_servo_position(void)
 {
   Serial.println(my_servo.readRam(HerkulexRamRegister::CalibratedPosition));
-  // Serial.print("Aimant_centre : ");
-  // Serial.print(Pivot_pince.getPosition());
-  // // Serial.print(0.325 * (Aimant_centre.getPosition() - 512));
-  // Serial.print(" | Aimant_gauche : ");
-  // Serial.print(0.325 * (Aimant_gauche.getPosition() - 512));
-  // Serial.print(" | Aimant_droit : ");
-  // Serial.print(0.325 * (Aimant_droit.getPosition() - 512));
-  // Serial.print(" | pivot_gauche : ");
-  // Serial.print(0.325 * (Pivot_gauche.getPosition() - 512));
-  // Serial.print(" | pivot_droit : ");
-  // Serial.print(0.325 * (Pivot_droit.getPosition() - 512));
-  // Serial.print(" | pivot_pince : ");
-  // Serial.print(0.325 * (Pivot_pince.getPosition() - 512));
-  // Serial.print(" | pince : ");
-  // Serial.println(0.325 * (Pince.getPosition() - 512));
+  Serial.print("Aimant_centre : ");
+  Serial.print(Pivot_pince.getPosition());
+  // Serial.print(0.325 * (Aimant_centre.getPosition() - 512));
+  Serial.print(" | Aimant_gauche : ");
+  Serial.print(0.325 * (Aimant_gauche.getPosition() - 512));
+  Serial.print(" | Aimant_droit : ");
+  Serial.print(0.325 * (Aimant_droit.getPosition() - 512));
+  Serial.print(" | pivot_gauche : ");
+  Serial.print(0.325 * (Pivot_gauche.getPosition() - 512));
+  Serial.print(" | pivot_droit : ");
+  Serial.print(0.325 * (Pivot_droit.getPosition() - 512));
+  Serial.print(" | pivot_pince : ");
+  Serial.print(0.325 * (Pivot_pince.getPosition() - 512));
+  Serial.print(" | pince : ");
+  Serial.println(0.325 * (Pince.getPosition() - 512));
 }
 
 // Allume la led en bleu pour les herkulex connectées
@@ -273,4 +271,9 @@ void get_all_servo_pos(
   *pos_servo_aimant_centre = (Aimant_centre.getPosition() - 512) * 0.325;
   *pos_servo_pince = (Pince.getPosition() - 512) * 0.325;
   *pos_servo_pivot_pince = (Pivot_pince.getPosition() - 512) * 0.325;
+}
+
+void restart_all_servo(void){
+  my_servo.reboot();
+  vTaskDelay(pdMS_TO_TICKS(225));
 }
