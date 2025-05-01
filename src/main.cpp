@@ -6,6 +6,8 @@
 #include <CONFIG_CARTE.h>
 // offset pour différencier les deux cartes MPP, avant, ou arrière
 
+#define PIN_POMPE PF0 // Pin pour la pompe
+
 SemaphoreHandle_t mutex = NULL;        // handle du mutex
 TaskHandle_t build_handle = nullptr;   // handle de la contruction
 TaskHandle_t stepper_handle = nullptr; // handle du stepper
@@ -23,6 +25,7 @@ bool mode_fdc, actionner = 0, flag_stepper = 0;
 void Gestion_STEPPER(void *parametres);
 void Gestion_CAN(void *parametres);
 void build_floor2(void *);
+void cmd_pompe(bool mouvement);
 // void task_interrupt_stepper(void*);
 
 void setup()
@@ -41,6 +44,8 @@ void setup()
     delay(100);
     Serial.println("setup_can");
     delay(100);
+
+    pinMode(PIN_POMPE,OUTPUT);
 
     mutex = xSemaphoreCreateMutex(); // cree le mutex
     xTaskCreate(Gestion_STEPPER, "Gestion_STEPPER", configMINIMAL_STACK_SIZE, NULL, 2, &stepper_handle);
@@ -65,6 +70,11 @@ void setup()
 void loop()
 {
     // loop vide
+}
+
+void cmd_pompe(bool mouvement){
+    if(mouvement == ATTRAPER) digitalWrite(PIN_POMPE,HIGH);
+    else digitalWrite(PIN_POMPE,LOW);
 }
 
 // Reçoit les trames CAN et prend ceux qui concernent la carte et les traite
@@ -173,53 +183,8 @@ void Gestion_STEPPER(void *parametres) // v1
         blockStepper();
         flag_stepper = 0;
 
-        // exemple de mutex
-        // prend le mutex avant d'utiliser les periphériques séries
-        // if (xSemaphoreTake(mutex, (TickType_t)5) == pdTRUE)
-        // {
-        //     Serial.println("stepper");
-        //     xSemaphoreGive(mutex);
-        // }
-        // vTaskDelay(pdMS_TO_TICKS(5)); // tache périodique de 5 ms
     }
 }
-
-// void task_interrupt_stepper(void*){ //v2 test
-//     /*
-//         Même principe que build_2_floor on fait une task interruption pour éviter
-//         l'utilisation au plus des mutex et pour faire en sorte que la tâche ne
-//         mange rien tant qu'elle n'est pas envoyée
-
-//         J'ai prévu qu'on puisse lui envoyer un peu tout que ça soit du CAN ou juste
-//         un message classique comme ce qu'on a dans build_floor2
-//     */
-
-//     int local_nb_step = 0; // valeur locale des pas
-//     bool local_fdc_mode = false; // valeure locale du mode
-//     uint32_t data_swooper; // sorte de pointeur pour aller chercher la data
-
-//     while(true){
-//         // on attend la notif et on prend la data rx qui nous est envoyé
-//         xTaskNotifyWait(0, 0xFFFFFFFF, &data_swooper, portMAX_DELAY);
-//         // méthode qui devrait être efficace mais obligé d'avoir des "uint"
-
-//         char* local_data = (char*)data_swooper;
-//         // on peut donc traiter le message rx de manière locale !
-
-//         // nbre de pas codé sur les 4 premiers octet de la trame
-//         local_nb_step = *((int*)local_data);
-//         // mode de fdc sur l'octet de 4
-//         local_fdc_mode = local_data[4];
-
-//         stepper(local_nb_step, PAS_COMPLET, local_fdc_mode);
-//         blockStepper();
-
-//         local_nb_step = 0;
-//         local_fdc_mode = false;
-
-//         // comme pour la tâche build_floor2 une fois que c'est terminé : sleep sleep
-//     }
-// }
 
 // tache qui permet de constuire un étage
 void build_floor2(void *)
@@ -280,7 +245,7 @@ void build_floor2(void *)
             case 0:                                  // pas besoin de default comme on commence qu'une fois réveillé
                 // attrape la planche et ecarte les aimants pour monter plus tard
                 cmd_pivot_pince(DEPLOYER);
-                cmd_pince(ATTRAPER);
+                cmd_pompe(ATTRAPER);
                 aimant_cote_ecarter();
                 
                 if((now - last_update) > 2000){
