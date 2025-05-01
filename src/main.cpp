@@ -48,6 +48,8 @@ void setup()
     xTaskCreate(build_floor2, "bluid_floor2", configMINIMAL_STACK_SIZE, NULL, 2, &build_handle);
     // xTaskCreate(task_interrupt_stepper, "task_interrupt_stepper", configMINIMAL_STACK_SIZE, NULL, 3, &stepper_handle);
     // check for creation errors
+    pinMode(PF0, OUTPUT);
+    pinMode(PF1, OUTPUT);
 
     // start scheduler
     sendCANMessage(BOOT_CARTE_MPP, 1, 0, 0, 0, 0, 0, 0, 0); // signale que la carte a boot, pret à recevoir des ordres
