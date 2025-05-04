@@ -68,31 +68,31 @@ void setup()
 void loop()
 {
     // loop vide
-    static bool aspire = false;
+    // static bool aspire = false;
 
-    if (Serial.available() > 0)
-    {
-        char read = Serial.read();
-        if (read == 'M')
-        {
-            aspire = true;
-        }
-        if (read == 'S')
-        {
-            aspire = false;
-        }
-    }
+    // if (Serial.available() > 0)
+    // {
+    //     char read = Serial.read();
+    //     if (read == 'M')
+    //     {
+    //         aspire = true;
+    //     }
+    //     if (read == 'S')
+    //     {
+    //         aspire = false;
+    //     }
+    // }
 
-    if (aspire)
-    {
-        // Serial.printf("ASPIRE \n");
-        cmd_pompe(true);
-    }
-    else
-    {
-        // Serial.printf("ASPIRE PAS\n");
-        cmd_pompe(false);
-    }
+    // if (aspire)
+    // {
+    //     // Serial.printf("ASPIRE \n");
+    //     cmd_pompe(true);
+    // }
+    // else
+    // {
+    //     // Serial.printf("ASPIRE PAS\n");
+    //     cmd_pompe(false);
+    // }
 }
 
 void cmd_pompe(bool mouvement)
@@ -162,6 +162,7 @@ void Gestion_CAN(void *parametres)
                     // met à la pos pour attraper les cannetes
                     cmd_aimant_centre(ATTRAPER);
                     cmd_aimant_cote(ATTRAPER);
+                    cmd_pompe(false);
                     break;
                 case CONSTRUIRE_2ETAGE:
                     /*
@@ -204,6 +205,7 @@ void Gestion_STEPPER(void *parametres) // v1
 {
     while (1)
     {
+        /*On bloque constamment le moteur pas a pas et on*/ 
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         stepper(nb_step, PAS_COMPLET, mode_fdc);
         blockStepper();
@@ -289,10 +291,12 @@ void build_floor2(void *)
                 break;
             case 2:
                 // quand le MPP aura finit il passe à l'étape d'après
+
                 if (flag_stepper == 0)
                 {
                     // le MPP a finit de monter
                     // remet les cannettes sur le coté
+                    restart_all_servo();
                     aimant_cote_attraper();
                     step_2_build = 3;
                     last_update = now;
@@ -300,21 +304,26 @@ void build_floor2(void *)
                 break;
             case 3:
                 // Attend 2 secondes
-                if (now - last_update > 800)
+                /*Lance la commande permettant de redescendre la planche du haut*/
+
+                if (now - last_update > 1200)
                 {
                     last_update = now;
-                    nb_step = -100, mode_fdc = 0, flag_stepper = 1;
+                    nb_step = -350, mode_fdc = 0, flag_stepper = 1;
                     xTaskNotifyGive(stepper_handle);
                     step_2_build = 4;
                 }
                 break;
             case 4:
                 // Attend que le MPP a fini descendre
+                /*Redescends la planche du haut pour venir la plaquer correctement sur les conserves*/
+
                 if (flag_stepper == 0)
                 {
                     // Le MPP a fini descendre
                     building = false;
                     Serial.println("finished building");
+                    cmd_pompe(false);
                     sendCANMessage(CONSTRUIRE_TERMINEE, 0, 0, 0, 0, 0, 0, 0, 0);
                 }
                 break;

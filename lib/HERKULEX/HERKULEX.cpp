@@ -199,7 +199,7 @@ void cmd_pivot_pompe(char mouvement)
   Pivot_pince.setTorqueOn();
   if (mouvement == DEPLOYER)
   {
-    Pivot_pince.setPosition(512 + 0 / 0.325, 50); // angle final de 0
+    Pivot_pince.setPosition(512 + 10 / 0.325, 50); // angle final de 100
   }
   if (mouvement == RETRACTER)
   {
