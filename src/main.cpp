@@ -20,7 +20,7 @@ int i = 0;
 // nbre de pas
 int nb_step;
 // mode fdc ou non, flag_stepper : 1 = MPP actionné, 0 = pas actionné
-bool mode_fdc, actionner = 0, flag_stepper = 0; 
+bool mode_fdc, actionner = 0, flag_stepper = 0;
 
 void Gestion_STEPPER(void *parametres);
 void Gestion_CAN(void *parametres);
@@ -45,7 +45,7 @@ void setup()
     Serial.println("setup_can");
     delay(100);
 
-    pinMode(PIN_POMPE,OUTPUT);
+    pinMode(PIN_POMPE, OUTPUT);
 
     mutex = xSemaphoreCreateMutex(); // cree le mutex
     xTaskCreate(Gestion_STEPPER, "Gestion_STEPPER", configMINIMAL_STACK_SIZE, NULL, 2, &stepper_handle);
@@ -68,11 +68,39 @@ void setup()
 void loop()
 {
     // loop vide
+    static bool aspire = false;
+
+    if (Serial.available() > 0)
+    {
+        char read = Serial.read();
+        if (read == 'M')
+        {
+            aspire = true;
+        }
+        if (read == 'S')
+        {
+            aspire = false;
+        }
+    }
+
+    if (aspire)
+    {
+        // Serial.printf("ASPIRE \n");
+        cmd_pompe(true);
+    }
+    else
+    {
+        // Serial.printf("ASPIRE PAS\n");
+        cmd_pompe(false);
+    }
 }
 
-void cmd_pompe(bool mouvement){
-    if(mouvement == ATTRAPER) digitalWrite(PIN_POMPE,HIGH);
-    else digitalWrite(PIN_POMPE,LOW);
+void cmd_pompe(bool mouvement)
+{
+    if (mouvement == ATTRAPER)
+        digitalWrite(PIN_POMPE, HIGH);
+    else
+        digitalWrite(PIN_POMPE, LOW);
 }
 
 // Reçoit les trames CAN et prend ceux qui concernent la carte et les traite
@@ -81,7 +109,7 @@ void Gestion_CAN(void *parametres)
 
     while (1)
     {
-        
+
         // prend le mutex avant d'utiliser les periphériques séries
         if (xSemaphoreTake(mutex, (TickType_t)5) == pdTRUE)
         {
@@ -130,7 +158,7 @@ void Gestion_CAN(void *parametres)
                 case CONTRUIRE_PREPARER:
                     restart_all_servo();
                     cmd_pivot_pompe(RETRACTER); // déploit pivot pince
-                    aimant_cote_attraper();  // pivots des côtés
+                    aimant_cote_attraper();     // pivots des côtés
                     // met à la pos pour attraper les cannetes
                     cmd_aimant_centre(ATTRAPER);
                     cmd_aimant_cote(ATTRAPER);
@@ -180,7 +208,6 @@ void Gestion_STEPPER(void *parametres) // v1
         stepper(nb_step, PAS_COMPLET, mode_fdc);
         blockStepper();
         flag_stepper = 0;
-
     }
 }
 
@@ -225,7 +252,7 @@ void build_floor2(void *)
     char data_stepper_msg[8];
 
     while (true)
-    {   
+    {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         // met à jour la valeur de last_update
         now = millis();
@@ -240,7 +267,7 @@ void build_floor2(void *)
                     en même temps
                 */
 
-            case 0:                                  // pas besoin de default comme on commence qu'une fois réveillé
+            case 0: // pas besoin de default comme on commence qu'une fois réveillé
                 // attrape la planche et ecarte les aimants pour monter plus tard
                 cmd_pivot_pompe(DEPLOYER);
                 cmd_pompe(ATTRAPER);
@@ -249,7 +276,8 @@ void build_floor2(void *)
                 break;
             case 1:
                 // monte le MPP après 1 sec
-                if((now - last_update) > 800){
+                if ((now - last_update) > 800)
+                {
                     restart_all_servo();
                     Serial.println(now - last_update);
                     // étape suivante dis au MPP de monter
@@ -261,7 +289,8 @@ void build_floor2(void *)
                 break;
             case 2:
                 // quand le MPP aura finit il passe à l'étape d'après
-                if(flag_stepper == 0){
+                if (flag_stepper == 0)
+                {
                     // le MPP a finit de monter
                     // remet les cannettes sur le coté
                     aimant_cote_attraper();
@@ -271,16 +300,18 @@ void build_floor2(void *)
                 break;
             case 3:
                 // Attend 2 secondes
-                if(now - last_update > 800){
+                if (now - last_update > 800)
+                {
                     last_update = now;
                     nb_step = -100, mode_fdc = 0, flag_stepper = 1;
                     xTaskNotifyGive(stepper_handle);
                     step_2_build = 4;
                 }
                 break;
-            case 4: 
+            case 4:
                 // Attend que le MPP a fini descendre
-                if(flag_stepper == 0){ 
+                if (flag_stepper == 0)
+                {
                     // Le MPP a fini descendre
                     building = false;
                     Serial.println("finished building");
