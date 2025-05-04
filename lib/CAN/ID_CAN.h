@@ -4,7 +4,7 @@
 #define _ID_H
 
 #define STOP_ROBOT_FIN_MATCH 0x001
-#define START_ROBOT_MATCH 0x003
+#define START_ROBOT_MATCH 0x002
 
 #define ROTATION 0x020
 #define LIGNE_DROITE 0x021
