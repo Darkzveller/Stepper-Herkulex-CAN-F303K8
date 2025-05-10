@@ -152,7 +152,7 @@ void Gestion_CAN(void *parametres)
                 case HERKULEX_PIVOT_POMPE:
                     cmd_pivot_pompe(data_msg_can_rx[0]);
                     break;
-                case HERKULEX_PINCE:
+                case LACHER:
                     // cmd_pince(data_msg_can_rx[0]);
                     break;
                 case CONTRUIRE_PREPARER:
