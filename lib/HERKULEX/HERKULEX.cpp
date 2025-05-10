@@ -277,3 +277,28 @@ void restart_all_servo(void){
   my_servo.reboot();
   vTaskDelay(pdMS_TO_TICKS(225));
 }
+
+void change_id(uint8_t id, HerkulexServo old_, HerkulexServo new_){
+
+  old_.setLedColor(HerkulexLed::Blue);
+  delay(10000);
+  old_.reboot();
+  delay(500); // OK
+  // lis pour lever temporairement la protection de la rom
+  Serial.printf("%d",old_.readEep(HerkulexEepRegister::ID));
+  old_.writeEep(HerkulexEepRegister::ID, id);
+  Serial.printf("%d",old_.readEep(HerkulexEepRegister::ID));
+  delay(300); // un peu plus long
+  new_.reboot();
+  delay(300); // pour être certain
+  new_.setLedColor(HerkulexLed::White);
+  while(1){
+    if (Serial.available() > 0)
+    {
+      char c = Serial.read();
+
+      if (c == 'f') break;
+
+    }
+  }
+}
